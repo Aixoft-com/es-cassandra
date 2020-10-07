@@ -9,6 +9,6 @@ public class EventVersion {
 
     public EventVersion getNext(boolean isSnapshot) {
         return isSnapshot ? new EventVersion(snapshotNumber + 1, 0)
-                : new EventVersion(snapshotNumber, eventNumber + 1);
+            : new EventVersion(snapshotNumber, eventNumber + 1);
     }
 }

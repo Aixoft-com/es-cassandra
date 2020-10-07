@@ -26,10 +26,10 @@ public class AggregateSubscribedMethodsComponent implements AggregateSubscribedM
     public void invokeAggregateMethodForEvent(@NonNull AggregateRoot aggregateRoot, @NonNull Event event) {
         Map<Class<?>, Method> eventHandlerWithMethod = eventWithHandlerMethodByAggregateRoot.get(aggregateRoot.getClass());
 
-        if(eventHandlerWithMethod != null) {
+        if (eventHandlerWithMethod != null) {
             Method handlerMethod = eventHandlerWithMethod.get(event.getClass());
 
-            if(handlerMethod != null) {
+            if (handlerMethod != null) {
                 handlerMethod.invoke(aggregateRoot, event, aggregateRoot);
             }
         }

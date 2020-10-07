@@ -37,14 +37,14 @@ public class EventClassByNameReflection {
             Class eventClass = Class.forName(beanDefinition.getBeanClassName());
 
             Annotation annotation = eventClass.getAnnotation(DomainEvent.class);
-            if(annotation instanceof DomainEvent) {
+            if (annotation instanceof DomainEvent) {
                 DomainEvent domainEvent = (DomainEvent) annotation;
 
-                if(domainEvent.event() == null || domainEvent.event().isBlank()) {
+                if (domainEvent.event() == null || domainEvent.event().isBlank()) {
                     throw new BeanInstantiationException(eventClass, String.format("Event is null or blank"));
                 }
 
-                if(domainEventMap.containsKey(domainEvent.event())) {
+                if (domainEventMap.containsKey(domainEvent.event())) {
                     throw new BeanInstantiationException(eventClass, String.format("Duplicated event '%s'", domainEvent.event()));
                 }
 

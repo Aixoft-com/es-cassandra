@@ -21,8 +21,8 @@ public final class EventWithHandlerMethodByAggregateReflection {
 
         aggregateClasses.forEach(aggregateClass -> {
             Arrays.stream(aggregateClass.getDeclaredMethods())
-                    .filter(method -> method.isAnnotationPresent(Subscribe.class))
-                    .forEach(method -> addAggregateSubscribedMethodsToMap(aggregateClass, method, eventWithHandlerMethodByAggregateRoot));
+                .filter(method -> method.isAnnotationPresent(Subscribe.class))
+                .forEach(method -> addAggregateSubscribedMethodsToMap(aggregateClass, method, eventWithHandlerMethodByAggregateRoot));
         });
 
         return eventWithHandlerMethodByAggregateRoot;
@@ -30,38 +30,38 @@ public final class EventWithHandlerMethodByAggregateReflection {
 
 
     private static void addAggregateSubscribedMethodsToMap(Class<? extends AggregateRoot> aggregateClass,
-                                                    Method method, Map<Class<? extends AggregateRoot>,
-            Map<Class<?>, Method>> eventWithHandlerMethodByAggregateRoot) {
+                                                           Method method, Map<Class<? extends AggregateRoot>,
+        Map<Class<?>, Method>> eventWithHandlerMethodByAggregateRoot) {
 
         if (method.getParameterCount() != 2) {
             throw new InvalidEventHandlerDefinitionException(
-                    String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but exactly two are allowed",
-                            method.getName(),
-                            aggregateClass.getName(),
-                            Subscribe.class.getName(),
-                            method.getParameterCount())
+                String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but exactly two are allowed",
+                    method.getName(),
+                    aggregateClass.getName(),
+                    Subscribe.class.getName(),
+                    method.getParameterCount())
             );
         }
 
         Class<?> publisherParameterType = method.getParameterTypes()[1];
         if (!AggregateRoot.class.isAssignableFrom(publisherParameterType)) {
             throw new InvalidEventHandlerDefinitionException(
-                    String.format("Method '%s' in class '%s' annotated with '%s' has 2nd parameter which in not subtype of '%s'",
-                            method.getName(),
-                            aggregateClass.getName(),
-                            Subscribe.class.getName(),
-                            AggregateRoot.class.getName())
+                String.format("Method '%s' in class '%s' annotated with '%s' has 2nd parameter which in not subtype of '%s'",
+                    method.getName(),
+                    aggregateClass.getName(),
+                    Subscribe.class.getName(),
+                    AggregateRoot.class.getName())
             );
         }
 
         Class<?> eventParameterType = method.getParameterTypes()[0];
         if (!Event.class.isAssignableFrom(eventParameterType)) {
             throw new InvalidEventHandlerDefinitionException(
-                    String.format("Method '%s' in class '%s' annotated with '%s' has 1st parameter which in not subtype of '%s'",
-                            method.getName(),
-                            aggregateClass.getName(),
-                            Subscribe.class.getName(),
-                            Event.class.getName())
+                String.format("Method '%s' in class '%s' annotated with '%s' has 1st parameter which in not subtype of '%s'",
+                    method.getName(),
+                    aggregateClass.getName(),
+                    Subscribe.class.getName(),
+                    Event.class.getName())
             );
         }
 
@@ -78,9 +78,9 @@ public final class EventWithHandlerMethodByAggregateReflection {
             eventHandlerWithMethod.put(eventParameterType, method);
         } else {
             throw new InvalidEventHandlerDefinitionException(
-                    String.format("More then one event handler defined for same event '%s' in class '%s'",
-                            eventParameterType.getName(),
-                            aggregateClass.getName())
+                String.format("More then one event handler defined for same event '%s' in class '%s'",
+                    eventParameterType.getName(),
+                    aggregateClass.getName())
             );
         }
     }

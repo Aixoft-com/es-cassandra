@@ -2,10 +2,10 @@ package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.annotation.Subscribe;
-import com.aixoft.escassandra.service.EventHandler;
 import com.aixoft.escassandra.exception.runtime.EventHandlerInvocationFailedException;
 import com.aixoft.escassandra.exception.runtime.InvalidEventHandlerDefinitionException;
 import com.aixoft.escassandra.model.Event;
+import com.aixoft.escassandra.service.EventHandler;
 import com.aixoft.escassandra.service.EventRouter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -24,39 +24,39 @@ public class AutoconfiguredEventRouter implements EventRouter {
     @Override
     public void registerEventHandler(@NonNull EventHandler eventHandler) {
         List<Method> methods = Arrays.stream(eventHandler.getClass().getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Subscribe.class))
-                .collect(Collectors.toList());
+            .filter(method -> method.isAnnotationPresent(Subscribe.class))
+            .collect(Collectors.toList());
 
         for (Method method : methods) {
             if (method.getParameterCount() != 2) {
                 throw new InvalidEventHandlerDefinitionException(
-                        String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but exactly two are allowed",
-                                method.getName(),
-                                eventHandler.getClass().getName(),
-                                Subscribe.class.getName(),
-                                method.getParameterCount())
+                    String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but exactly two are allowed",
+                        method.getName(),
+                        eventHandler.getClass().getName(),
+                        Subscribe.class.getName(),
+                        method.getParameterCount())
                 );
             }
 
             Class<?> publisherParameterType = method.getParameterTypes()[1];
             if (!AggregateRoot.class.isAssignableFrom(publisherParameterType)) {
                 throw new InvalidEventHandlerDefinitionException(
-                        String.format("Method '%s' in class '%s' annotated with '%s' has 2nd parameter which in not subtype of '%s'",
-                                method.getName(),
-                                eventHandler.getClass().getName(),
-                                Subscribe.class.getName(),
-                                AggregateRoot.class.getName())
+                    String.format("Method '%s' in class '%s' annotated with '%s' has 2nd parameter which in not subtype of '%s'",
+                        method.getName(),
+                        eventHandler.getClass().getName(),
+                        Subscribe.class.getName(),
+                        AggregateRoot.class.getName())
                 );
             }
 
             Class<?> eventParameterType = method.getParameterTypes()[0];
             if (!Event.class.isAssignableFrom(eventParameterType)) {
                 throw new InvalidEventHandlerDefinitionException(
-                        String.format("Method '%s' in class '%s' annotated with '%s' has 1st parameter which in not subtype of '%s'",
-                                method.getName(),
-                                eventHandler.getClass().getName(),
-                                Subscribe.class.getName(),
-                                Event.class.getName())
+                    String.format("Method '%s' in class '%s' annotated with '%s' has 1st parameter which in not subtype of '%s'",
+                        method.getName(),
+                        eventHandler.getClass().getName(),
+                        Subscribe.class.getName(),
+                        Event.class.getName())
                 );
             }
 
@@ -72,9 +72,9 @@ public class AutoconfiguredEventRouter implements EventRouter {
                 eventHandlerMethod.put(eventHandler, method);
             } else {
                 throw new InvalidEventHandlerDefinitionException(
-                        String.format("More then one event handler defined for same event '%s' in class '%s'",
-                                eventParameterType.getName(),
-                                eventHandler.getClass().getName())
+                    String.format("More then one event handler defined for same event '%s' in class '%s'",
+                        eventParameterType.getName(),
+                        eventHandler.getClass().getName())
                 );
             }
         }
@@ -91,9 +91,9 @@ public class AutoconfiguredEventRouter implements EventRouter {
                 } catch (ReflectiveOperationException ex) {
                     log.error(ex.getMessage(), ex);
                     new EventHandlerInvocationFailedException(
-                            String.format("Method '%s' in '%s' failed on invoke",
-                                    method.getName(),
-                                    eventHandler)
+                        String.format("Method '%s' in '%s' failed on invoke",
+                            method.getName(),
+                            eventHandler)
                     );
                 }
             });

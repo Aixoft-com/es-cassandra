@@ -1,8 +1,8 @@
 package com.aixoft.escassandra.aggregate;
 
-import com.aixoft.escassandra.service.EventHandler;
 import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.model.EventVersion;
+import com.aixoft.escassandra.service.EventHandler;
 import lombok.NonNull;
 
 import java.util.LinkedList;
@@ -45,8 +45,8 @@ public abstract class AggregateRoot implements EventHandler {
     @Override
     public String toString() {
         return "AggregateRoot{" +
-                "committedVersion=" + committedVersion +
-                ", id=" + id +
-                '}';
+            "committedVersion=" + committedVersion +
+            ", id=" + id +
+            '}';
     }
 }

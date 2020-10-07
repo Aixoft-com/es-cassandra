@@ -30,18 +30,18 @@ public class CassandraEventSourcingBeansRegistrar implements ImportBeanDefinitio
         List<Class> aggregateClasses = ClassTypeFilter.filterAllAggregateClasses(aggregatePackages, AggregateRoot.class);
 
         BeanDefinitionReaderUtils.registerWithGeneratedName(
-                BeanDefinitionBuilder.genericBeanDefinition(AggregateComponent.class)
-                        .addConstructorArgValue(aggregateClasses)
-                        .getBeanDefinition(),
-                registry
+            BeanDefinitionBuilder.genericBeanDefinition(AggregateComponent.class)
+                .addConstructorArgValue(aggregateClasses)
+                .getBeanDefinition(),
+            registry
         );
 
         String[] eventPackages = (String[]) attributes.get("eventPackages");
         String domainEventsBeanName = BeanDefinitionReaderUtils.registerWithGeneratedName(
-                BeanDefinitionBuilder.genericBeanDefinition(DomainEventsComponent.class)
-                        .addConstructorArgValue(eventPackages)
-                        .getBeanDefinition(),
-                registry
+            BeanDefinitionBuilder.genericBeanDefinition(DomainEventsComponent.class)
+                .addConstructorArgValue(eventPackages)
+                .getBeanDefinition(),
+            registry
         );
 
         registerConverters(registry, domainEventsBeanName);
@@ -51,18 +51,18 @@ public class CassandraEventSourcingBeansRegistrar implements ImportBeanDefinitio
         ObjectMapper objectMapper = new JsonMapper();
 
         BeanDefinitionReaderUtils.registerWithGeneratedName(
-                BeanDefinitionBuilder.genericBeanDefinition(EventReadingConverter.class)
-                        .addConstructorArgReference(domainEventsBeanName)
-                        .addConstructorArgValue(objectMapper)
-                        .getBeanDefinition(),
-                registry
+            BeanDefinitionBuilder.genericBeanDefinition(EventReadingConverter.class)
+                .addConstructorArgReference(domainEventsBeanName)
+                .addConstructorArgValue(objectMapper)
+                .getBeanDefinition(),
+            registry
         );
 
         BeanDefinitionReaderUtils.registerWithGeneratedName(
-                BeanDefinitionBuilder.genericBeanDefinition(EventWritingConverter.class)
-                        .addConstructorArgValue(objectMapper)
-                        .getBeanDefinition(),
-                registry
+            BeanDefinitionBuilder.genericBeanDefinition(EventWritingConverter.class)
+                .addConstructorArgValue(objectMapper)
+                .getBeanDefinition(),
+            registry
         );
     }
 }

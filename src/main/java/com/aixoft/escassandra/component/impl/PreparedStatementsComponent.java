@@ -27,7 +27,7 @@ public class PreparedStatementsComponent implements PreparedStatements {
     Map<Class<? extends AggregateRoot>, PreparedStatement> selectAllSinceSnapshotStatementsByAggregateClass = new HashMap<>();
 
     public PreparedStatementsComponent(@NonNull AggregateComponent aggregateComponent, @NonNull CassandraSession cassandraSession) {
-        if(aggregateComponent.getClasses() != null) {
+        if (aggregateComponent.getClasses() != null) {
             initPreparedStatements(aggregateComponent.getClasses(), cassandraSession.getSession());
         }
     }
@@ -61,7 +61,7 @@ public class PreparedStatementsComponent implements PreparedStatements {
         Aggregate annotation = aggregateClass.getAnnotation(Aggregate.class);
 
         String tableName;
-        if(annotation != null) {
+        if (annotation != null) {
             tableName = annotation.partitionKey();
         } else {
             throw new AggregateAnnotationMissingException(String.format("%s not annotated with %s", aggregateClass.getName(), Aggregate.class.getName()));

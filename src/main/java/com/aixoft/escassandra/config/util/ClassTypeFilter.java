@@ -21,16 +21,16 @@ public final class ClassTypeFilter {
     public static List<Class> filterAllAggregateClasses(@NonNull String[] basePackages, @NonNull Class assignableClass) {
 
         final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(
-                true);
+            true);
         provider.addIncludeFilter(new AssignableTypeFilter(AggregateRoot.class));
 
         List<Class> filteredClasses = new ArrayList<>();
 
         Arrays.stream(basePackages).forEach(basePackage -> {
             filteredClasses.addAll(provider.findCandidateComponents(basePackage).stream()
-                    .map(ClassTypeFilter::getClassByBeanDefinition)
-                    .filter(assignableClass::isAssignableFrom)
-                    .collect(Collectors.toList())
+                .map(ClassTypeFilter::getClassByBeanDefinition)
+                .filter(assignableClass::isAssignableFrom)
+                .collect(Collectors.toList())
             );
         });
 

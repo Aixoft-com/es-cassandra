@@ -3,10 +3,10 @@ package com.aixoft.escassandra.repository.impl;
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.component.PreparedStatements;
-import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.repository.EventDescriptorRepository;
 import com.aixoft.escassandra.repository.converter.EventReadingConverter;
 import com.aixoft.escassandra.repository.converter.EventWritingConverter;
+import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -42,13 +42,13 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
                           @NonNull List<EventDescriptor> newEventDescriptors) {
         PreparedStatement preparedStatement = preparedStatements.getInsertPreparedStatement(aggregateClass);
 
-        newEventDescriptors.forEach( eventDescriptor -> {
+        newEventDescriptors.forEach(eventDescriptor -> {
             session.execute(preparedStatement.bind(
-                    aggregateId,
-                    eventDescriptor.getMajorVersion(),
-                    eventDescriptor.getMinorVersion(),
-                    eventDescriptor.getEventId(),
-                    eventWritingConverter.convert(eventDescriptor.getEvent()))
+                aggregateId,
+                eventDescriptor.getMajorVersion(),
+                eventDescriptor.getMinorVersion(),
+                eventDescriptor.getEventId(),
+                eventWritingConverter.convert(eventDescriptor.getEvent()))
             );
         });
     }
@@ -61,8 +61,8 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
         ResultSet resultSet = session.execute(preparedStatement.bind(aggregateId));
 
         return resultSet.all().stream()
-                .map(this::getEventDescriptor)
-                .collect(Collectors.toList());
+            .map(this::getEventDescriptor)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -74,16 +74,16 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
         ResultSet resultSet = session.execute(preparedStatement.bind(aggregateId, snapshotVersion));
 
         return resultSet.all().stream()
-                .map(this::getEventDescriptor)
-                .collect(Collectors.toList());
+            .map(this::getEventDescriptor)
+            .collect(Collectors.toList());
     }
 
     private EventDescriptor getEventDescriptor(Row row) {
         return new EventDescriptor(
-                row.getInt(1),
-                row.getInt(2),
-                row.getUUID(3),
-                eventReadingConverter.convert(row.getString(4))
+            row.getInt(1),
+            row.getInt(2),
+            row.getUUID(3),
+            eventReadingConverter.convert(row.getString(4))
         );
     }
 
