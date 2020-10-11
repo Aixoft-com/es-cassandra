@@ -2,15 +2,16 @@ package com.aixoft.escassandra.component.impl;
 
 import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.config.EsCassandraProperties;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import lombok.NonNull;
 
 import javax.annotation.PostConstruct;
+import java.net.InetSocketAddress;
 
 public class CassandraSessionComponent implements CassandraSession {
     private final EsCassandraProperties esCassandraProperties;
-    private Session session;
+    private CqlSession session;
 
     public CassandraSessionComponent(@NonNull EsCassandraProperties esCassandraProperties) {
         this.esCassandraProperties = esCassandraProperties;
@@ -18,17 +19,17 @@ public class CassandraSessionComponent implements CassandraSession {
 
     @PostConstruct
     public void initSession() {
-        session = Cluster.builder()
-            .withClusterName(esCassandraProperties.getLocalDatacenter())
-            .withoutJMXReporting()
-            .withPort(Integer.parseInt(esCassandraProperties.getPort()))
-            .addContactPoint(esCassandraProperties.getIp())
-            .build()
-            .connect(esCassandraProperties.getKeyspace());
+        CqlSessionBuilder builder = new CqlSessionBuilder();
+        session = builder
+            .addContactPoint(
+                new InetSocketAddress(esCassandraProperties.getIp(), Integer.parseInt(esCassandraProperties.getPort())))
+            .withLocalDatacenter(esCassandraProperties.getLocalDatacenter())
+            .withKeyspace(esCassandraProperties.getKeyspace())
+            .build();
     }
 
     @Override
-    public Session getSession() {
+    public CqlSession getSession() {
         return session;
     }
 }

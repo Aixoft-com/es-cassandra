@@ -7,10 +7,10 @@ import com.aixoft.escassandra.repository.EventDescriptorRepository;
 import com.aixoft.escassandra.repository.converter.EventReadingConverter;
 import com.aixoft.escassandra.repository.converter.EventWritingConverter;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CassandraEventDescriptorRepository implements EventDescriptorRepository {
-    Session session;
+    CqlSession session;
     PreparedStatements preparedStatements;
     EventWritingConverter eventWritingConverter;
     EventReadingConverter eventReadingConverter;
@@ -82,7 +82,7 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
         return new EventDescriptor(
             row.getInt(1),
             row.getInt(2),
-            row.getUUID(3),
+            row.getUuid(3),
             eventReadingConverter.convert(row.getString(4))
         );
     }

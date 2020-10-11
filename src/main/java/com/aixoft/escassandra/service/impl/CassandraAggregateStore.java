@@ -10,7 +10,7 @@ import com.aixoft.escassandra.repository.EventDescriptorRepository;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.service.AggregateStore;
 import com.aixoft.escassandra.service.EventRouter;
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -46,7 +46,7 @@ public class CassandraAggregateStore implements AggregateStore {
             newEventDescriptors.add(new EventDescriptor(
                 currentEventVersion.getSnapshotNumber(),
                 currentEventVersion.getEventNumber(),
-                UUIDs.timeBased(),
+                Uuids.timeBased(),
                 event)
             );
         }

@@ -6,8 +6,8 @@ import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.component.PreparedStatements;
 import com.aixoft.escassandra.component.registrar.AggregateComponent;
 import com.aixoft.escassandra.exception.runtime.AggregateAnnotationMissingException;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
@@ -47,7 +47,7 @@ public class PreparedStatementsComponent implements PreparedStatements {
         return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateClass);
     }
 
-    private void initPreparedStatements(List<Class> aggregateClasses, @NonNull Session session) {
+    private void initPreparedStatements(List<Class> aggregateClasses, @NonNull CqlSession session) {
         aggregateClasses.forEach(aggregateClass -> {
             String partitionKey = getPartitionKey(aggregateClass);
 
