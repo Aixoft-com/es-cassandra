@@ -1,13 +1,13 @@
 package com.aixoft.escassandra.component.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
-import com.aixoft.escassandra.annotation.Aggregate;
 import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.component.PreparedStatements;
 import com.aixoft.escassandra.component.registrar.AggregateComponent;
-import com.aixoft.escassandra.exception.runtime.AggregateAnnotationMissingException;
+import com.aixoft.escassandra.component.util.TableNameUtil;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
@@ -49,24 +49,11 @@ public class PreparedStatementsComponent implements PreparedStatements {
 
     private void initPreparedStatements(List<Class> aggregateClasses, @NonNull CqlSession session) {
         aggregateClasses.forEach(aggregateClass -> {
-            String partitionKey = getPartitionKey(aggregateClass);
+            String tableName = TableNameUtil.fromAggregateClass(aggregateClass);
 
-            insertStatementsByAggregateClass.put(aggregateClass, session.prepare(String.format(INSERT_STATEMENT_FORMAT, partitionKey)));
-            selectAllStatementsByAggregateClass.put(aggregateClass, session.prepare(String.format(SELECT_ALL_STATEMENT_FORMAT, partitionKey)));
-            selectAllSinceSnapshotStatementsByAggregateClass.put(aggregateClass, session.prepare(String.format(SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT, partitionKey)));
+            insertStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(INSERT_STATEMENT_FORMAT, tableName))));
+            selectAllStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_STATEMENT_FORMAT, tableName))));
+            selectAllSinceSnapshotStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT, tableName))));
         });
-    }
-
-    private static String getPartitionKey(Class<? extends AggregateRoot> aggregateClass) {
-        Aggregate annotation = aggregateClass.getAnnotation(Aggregate.class);
-
-        String tableName;
-        if (annotation != null) {
-            tableName = annotation.partitionKey();
-        } else {
-            throw new AggregateAnnotationMissingException(String.format("%s not annotated with %s", aggregateClass.getName(), Aggregate.class.getName()));
-        }
-
-        return tableName;
     }
 }

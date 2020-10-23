@@ -1,17 +1,9 @@
 package com.aixoft.escassandra.annotation;
 
-import com.aixoft.escassandra.component.impl.AggregateSubscribedMethodsComponent;
-import com.aixoft.escassandra.component.impl.CassandraSessionComponent;
-import com.aixoft.escassandra.component.impl.PreparedStatementsComponent;
 import com.aixoft.escassandra.config.CassandraEventSourcingBeansRegistrar;
-import com.aixoft.escassandra.config.EsCassandraProperties;
-import com.aixoft.escassandra.repository.ReactiveEventDescriptorRepository;
-import com.aixoft.escassandra.repository.impl.CassandraEventDescriptorRepository;
-import com.aixoft.escassandra.repository.impl.ReactiveCassandraEventDescriptorRepository;
-import com.aixoft.escassandra.repository.impl.StatementBinderComponent;
-import com.aixoft.escassandra.service.impl.AutoconfiguredEventRouter;
-import com.aixoft.escassandra.service.impl.CassandraAggregateStore;
-import com.aixoft.escassandra.service.impl.ReactiveCassandraAggregateStore;
+import com.aixoft.escassandra.config.EsCommonConfiguration;
+import com.aixoft.escassandra.config.EsProceduralConfiguration;
+import com.aixoft.escassandra.config.EsReactiveConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -22,17 +14,11 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Import({EsCassandraProperties.class,
+@Import({
     CassandraEventSourcingBeansRegistrar.class,
-    CassandraSessionComponent.class,
-    AggregateSubscribedMethodsComponent.class,
-    PreparedStatementsComponent.class,
-    StatementBinderComponent.class,
-    AutoconfiguredEventRouter.class,
-    CassandraEventDescriptorRepository.class,
-    CassandraAggregateStore.class,
-    ReactiveCassandraEventDescriptorRepository.class,
-    ReactiveCassandraAggregateStore.class
+    EsCommonConfiguration.class,
+    EsProceduralConfiguration.class,
+    EsReactiveConfiguration.class
 })
 @Configuration
 public @interface EnableCassandraEventSourcing {
