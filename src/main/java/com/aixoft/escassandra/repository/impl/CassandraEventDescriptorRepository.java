@@ -8,8 +8,8 @@ import com.aixoft.escassandra.repository.converter.EventReadingConverter;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.repository.util.EventDescriptorRowUtil;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.Statement;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
@@ -47,15 +47,15 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
     }
 
     @Override
-    public List<EventDescriptor> findAllByAggregateIdSinceLastSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
-                                                                       @NonNull UUID aggregateId,
-                                                                       int snapshotVersion) {
+    public List<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
+                                                                   @NonNull UUID aggregateId,
+                                                                   int snapshotVersion) {
         return executeFindStatement(
             statementBinder.bindFindAllSinceLastSnapshotEventDescriptors(aggregateClass, aggregateId, snapshotVersion)
         );
     }
 
-    private List<EventDescriptor> executeFindStatement(Statement statement) {
+    private List<EventDescriptor> executeFindStatement(BoundStatement statement) {
         ResultSet resultSet = session.execute(statement);
 
         return resultSet.all().stream()

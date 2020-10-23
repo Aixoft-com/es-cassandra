@@ -9,6 +9,7 @@ import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.net.InetSocketAddress;
@@ -16,6 +17,7 @@ import java.time.Duration;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+@Slf4j
 public class CassandraSessionComponent implements CassandraSession, InitializingBean {
     private static final String CREATE_KEYSPACE_FORMAT = "CREATE KEYSPACE IF NOT EXISTS %s WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : %d};";
     private static final String DROP_KEYSPACE_IF_EXISTS_FORMAT = "DROP KEYSPACE IF EXISTS %s";
@@ -47,26 +49,26 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
     private void doSchemaAction() {
         switch (esCassandraProperties.getSchemaAction()) {
             case CREATE -> executeSchemaActionQuery(
-                    (session) -> session.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
-                    (session, table) -> session.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table))
+                    cqlSession -> cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
+                    (cqlSession, table) -> cqlSession.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table))
                 );
             case CREATE_IF_NOT_EXISTS -> executeSchemaActionQuery(
-                    (session) -> session.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
-                    (session, table) -> session.execute(String.format(CREATE_TABLE_IF_NOT_EXISTS_FORMAT, esCassandraProperties.getKeyspace(), table))
+                    cqlSession -> cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
+                    (cqlSession, table) -> cqlSession.execute(String.format(CREATE_TABLE_IF_NOT_EXISTS_FORMAT, esCassandraProperties.getKeyspace(), table))
                 );
             case RECREATE -> executeSchemaActionQuery(
-                    (session) -> session.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
-                    (session, table) -> {
-                        session.execute(String.format(DROP_TABLE_IF_EXISTS_FORMAT, esCassandraProperties.getKeyspace(), table));
-                        session.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table));
+                    cqlSession -> cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
+                    (cqlSession, table) -> {
+                        cqlSession.execute(String.format(DROP_TABLE_IF_EXISTS_FORMAT, esCassandraProperties.getKeyspace(), table));
+                        cqlSession.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table));
                     }
                 );
             case RECREATE_DROP_UNUSED -> executeSchemaActionQuery(
-                    (session) -> {
-                        session.execute(String.format(DROP_KEYSPACE_IF_EXISTS_FORMAT, esCassandraProperties.getKeyspace()));
-                        session.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor()));
+                    cqlSession -> {
+                        cqlSession.execute(String.format(DROP_KEYSPACE_IF_EXISTS_FORMAT, esCassandraProperties.getKeyspace()));
+                        cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor()));
                     },
-                    (session, table) -> session.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table))
+                    (cqlSession, table) -> cqlSession.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table))
                 );
         }
     }

@@ -2,7 +2,6 @@ package com.aixoft.escassandra.repository;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
-import lombok.NonNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -15,7 +14,7 @@ public interface ReactiveEventDescriptorRepository {
                             List<EventDescriptor> newEventDescriptors);
 
     Flux<EventDescriptor> findAllByAggregateId(Class<? extends AggregateRoot> aggregateClass, UUID aggregateId);
-    Flux<EventDescriptor> findAllByAggregateIdSinceLastSnapshot(Class<? extends AggregateRoot> aggregateClass,
-                                                                UUID aggregateId,
-                                                                int snapshotVersion);
+    Flux<EventDescriptor> findAllByAggregateIdSinceSnapshot(Class<? extends AggregateRoot> aggregateClass,
+                                                            UUID aggregateId,
+                                                            int snapshotVersion);
 }

@@ -2,13 +2,11 @@ package com.aixoft.escassandra.repository.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.CassandraSession;
-import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.repository.ReactiveEventDescriptorRepository;
 import com.aixoft.escassandra.repository.StatementBinder;
 import com.aixoft.escassandra.repository.converter.EventReadingConverter;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.repository.util.EventDescriptorRowUtil;
-import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.*;
@@ -54,9 +52,9 @@ public class ReactiveCassandraEventDescriptorRepository implements ReactiveEvent
     }
 
     @Override
-    public Flux<EventDescriptor> findAllByAggregateIdSinceLastSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
-                                                                       @NonNull UUID aggregateId,
-                                                                       int snapshotVersion) {
+    public Flux<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
+                                                                   @NonNull UUID aggregateId,
+                                                                   int snapshotVersion) {
         return executeFindStatement(
             statementBinder.bindFindAllSinceLastSnapshotEventDescriptors(aggregateClass, aggregateId, snapshotVersion)
         );

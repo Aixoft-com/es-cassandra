@@ -25,7 +25,7 @@ public class StatementBinderComponent implements StatementBinder {
     public Statement bindInsertEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, @NonNull List<EventDescriptor> eventDescriptors) {
         PreparedStatement preparedStatement = preparedStatements.getInsertPreparedStatement(aggregateClass);
 
-        Statement insertStatement;
+        Statement<? extends Statement>  insertStatement;
         if(eventDescriptors.size() == 1) {
             insertStatement = bindInsertStatement(preparedStatement, aggregateId, eventDescriptors.get(0));
         }
@@ -49,14 +49,14 @@ public class StatementBinderComponent implements StatementBinder {
     }
 
     @Override
-    public Statement bindFindAllEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId) {
+    public BoundStatement  bindFindAllEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId) {
         PreparedStatement preparedStatement = preparedStatements.getSelectAllPreparedStatement(aggregateClass);
 
         return preparedStatement.bind(aggregateId);
     }
 
     @Override
-    public Statement bindFindAllSinceLastSnapshotEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, int snapshotVersion) {
+    public BoundStatement bindFindAllSinceLastSnapshotEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, int snapshotVersion) {
         PreparedStatement preparedStatement = preparedStatements.getSelectAllSinceSnapshotPreparedStatement(aggregateClass);
 
         return preparedStatement.bind(aggregateId, snapshotVersion);

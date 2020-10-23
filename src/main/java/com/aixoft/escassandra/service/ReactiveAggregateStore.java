@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface ReactiveAggregateStore {
     Mono<EventVersion> save(AggregateRoot aggregate);
 
-    <T extends AggregateRoot> Mono<T> findById(UUID aggregateId, Class<T> aggregateClass);
+    <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, Class<T> aggregateClass);
 
-    <T extends AggregateRoot> Mono<T> findById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass);
+    <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass);
 }

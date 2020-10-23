@@ -29,9 +29,6 @@ public class CassandraAggregateStore implements AggregateStore {
 
     @Override
     public boolean save(AggregateRoot aggregate) {
-        //TODO: validate if last committed event's version is as expected, if not then throw ConcurrentAggregateModificationException
-        //TODO: if some event does not require validation then pulling last event for version could be skipped (consider if snapshot happen then change might not be included)
-
         List<EventDescriptor> newEventDescriptors = new ArrayList<>(aggregate.getUncommittedChanges().size());
 
         EventVersion currentEventVersion = aggregate.getCommittedVersion();
@@ -68,7 +65,7 @@ public class CassandraAggregateStore implements AggregateStore {
     }
 
     @Override
-    public <T extends AggregateRoot> T findById(UUID aggregateId, Class<T> aggregateClass) {
+    public <T extends AggregateRoot> T loadById(UUID aggregateId, Class<T> aggregateClass) {
         T aggregateRoot = createAggregate(aggregateId, aggregateClass);
 
         List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateId(aggregateClass, aggregateId);
@@ -79,10 +76,10 @@ public class CassandraAggregateStore implements AggregateStore {
     }
 
     @Override
-    public <T extends AggregateRoot> T findById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
+    public <T extends AggregateRoot> T loadById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
         T aggregateRoot = createAggregate(aggregateId, aggregateClass);
 
-        List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateIdSinceLastSnapshot(aggregateClass, aggregateId, baseSnapshotVersion);
+        List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateIdSinceSnapshot(aggregateClass, aggregateId, baseSnapshotVersion);
 
         loadFromHistory(aggregateRoot, eventDescriptors);
 

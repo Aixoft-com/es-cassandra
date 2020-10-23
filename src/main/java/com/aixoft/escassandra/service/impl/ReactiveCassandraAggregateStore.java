@@ -50,7 +50,7 @@ public class ReactiveCassandraAggregateStore implements ReactiveAggregateStore {
 
         return eventDescriptorRepository.insertAll(aggregate.getClass(), aggregate.getId(), newEventDescriptors)
             .doOnNext(res -> {
-                    if(res == true) {
+                    if(Boolean.TRUE.equals(res)) {
                         //TODO: Aggregate shall be cloned here
                         aggregate.setCommittedVersion(lastEvent);
 
@@ -66,11 +66,11 @@ public class ReactiveCassandraAggregateStore implements ReactiveAggregateStore {
                     }
                 }
             )
-            .flatMap(inserted -> inserted ? Mono.just(lastEvent) : Mono.empty());
+            .flatMap(inserted -> Boolean.TRUE.equals(inserted) ? Mono.just(lastEvent) : Mono.empty());
     }
 
     @Override
-    public <T extends AggregateRoot> Mono<T> findById(UUID aggregateId, Class<T> aggregateClass) {
+    public <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, Class<T> aggregateClass) {
 
          return eventDescriptorRepository.findAllByAggregateId(aggregateClass, aggregateId)
             .reduceWith(
@@ -80,8 +80,8 @@ public class ReactiveCassandraAggregateStore implements ReactiveAggregateStore {
     }
 
     @Override
-    public <T extends AggregateRoot> Mono<T> findById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
-        return eventDescriptorRepository.findAllByAggregateIdSinceLastSnapshot(aggregateClass, aggregateId, baseSnapshotVersion)
+    public <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
+        return eventDescriptorRepository.findAllByAggregateIdSinceSnapshot(aggregateClass, aggregateId, baseSnapshotVersion)
             .reduceWith(
                 () -> createAggregate(aggregateId, aggregateClass),
                 this::loadFromHistory
