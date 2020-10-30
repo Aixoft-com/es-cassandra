@@ -11,6 +11,12 @@ clone:
 definitions:
   caches:
     sonar: ~/.sonar/cache  # Caching SonarCloud artifacts will speed up your build
+  services:
+    cassandra:
+      image: cassandra
+      environment:
+        MAX_HEAP_SIZE: 512M # Need to restrict the heapsize or else Cassandra will OOM
+        HEAP_NEWSIZE: 128M
   steps:
     - step: &build-test-sonarcloud
         name: Build, test and analyze on SonarCloud
@@ -19,6 +25,8 @@ definitions:
           - sonar
         script:
           - ./mvnw -B org.jacoco:jacoco-maven-plugin:prepare-agent verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+        services:
+          - cassandra
         artifacts:
           - target/**
     - step: &build-test
@@ -29,6 +37,8 @@ definitions:
           - ./mvnw -B verify
         artifacts:
           - target/**
+        services:
+          - cassandra
 pipelines:
   default:
     - step: *build-test
