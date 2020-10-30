@@ -1,14 +1,13 @@
-package com.aixoft.escassandra.it.repository.impl;
+package com.aixoft.escassandra.repository.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.annotation.Aggregate;
 import com.aixoft.escassandra.annotation.DomainEvent;
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.it.config.TestEsCassandraConfiguration;
+import com.aixoft.escassandra.config.TestEsCassandraConfiguration;
 import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.model.SnapshotEvent;
-import com.aixoft.escassandra.repository.impl.ReactiveCassandraEventDescriptorRepository;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

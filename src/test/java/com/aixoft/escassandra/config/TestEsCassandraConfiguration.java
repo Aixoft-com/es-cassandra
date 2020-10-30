@@ -1,4 +1,4 @@
-package com.aixoft.escassandra.it.config;
+package com.aixoft.escassandra.config;
 
 import com.aixoft.escassandra.config.EsCassandraProperties;
 import com.aixoft.escassandra.config.enums.SchemaAction;
