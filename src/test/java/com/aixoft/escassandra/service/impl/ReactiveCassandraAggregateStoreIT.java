@@ -1,11 +1,10 @@
-package com.aixoft.escassandra.it.service.impl;
+package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.it.config.TestEsCassandraConfiguration;
-import com.aixoft.escassandra.it.service.impl.model.AggregateMock;
+import com.aixoft.escassandra.config.TestEsCassandraConfiguration;
+import com.aixoft.escassandra.service.impl.model.AggregateMock;
 import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.repository.impl.ReactiveCassandraEventDescriptorRepository;
-import com.aixoft.escassandra.service.impl.ReactiveCassandraAggregateStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -12,7 +12,7 @@
     <artifactId>escassandra</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>escassandra</name>
-    <description>Demo project for Spring Boot</description>
+    <description>Event Sourcing library for cassandra</description>
 
     <properties>
         <java.version>14</java.version>
@@ -93,6 +93,20 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+
+            <!-- INTEGRATION TESTS -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

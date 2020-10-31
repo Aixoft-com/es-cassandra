@@ -1,4 +1,4 @@
-package com.aixoft.escassandra.it.service.impl.model;
+package com.aixoft.escassandra.service.impl.model;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.annotation.Aggregate;
