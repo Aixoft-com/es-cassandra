@@ -10,5 +10,5 @@ import org.springframework.context.annotation.Import;
     CassandraEventDescriptorRepository.class,
     CassandraAggregateStore.class
 })
-public class EsProceduralConfiguration {
+public class EsConfiguration {
 }

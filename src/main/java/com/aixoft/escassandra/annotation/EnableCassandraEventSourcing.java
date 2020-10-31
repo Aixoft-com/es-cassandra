@@ -2,7 +2,7 @@ package com.aixoft.escassandra.annotation;
 
 import com.aixoft.escassandra.config.CassandraEventSourcingBeansRegistrar;
 import com.aixoft.escassandra.config.EsCommonConfiguration;
-import com.aixoft.escassandra.config.EsProceduralConfiguration;
+import com.aixoft.escassandra.config.EsConfiguration;
 import com.aixoft.escassandra.config.EsReactiveConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
 @Import({
     CassandraEventSourcingBeansRegistrar.class,
     EsCommonConfiguration.class,
-    EsProceduralConfiguration.class,
+    EsConfiguration.class,
     EsReactiveConfiguration.class
 })
 @Configuration

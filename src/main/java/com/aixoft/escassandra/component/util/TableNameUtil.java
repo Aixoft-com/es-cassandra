@@ -2,6 +2,7 @@ package com.aixoft.escassandra.component.util;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.annotation.Aggregate;
+import com.aixoft.escassandra.config.constants.RegexPattern;
 import com.aixoft.escassandra.exception.runtime.AggregateAnnotationInvalidFormatException;
 import com.aixoft.escassandra.exception.runtime.AggregateAnnotationMissingException;
 import lombok.AccessLevel;
@@ -19,7 +20,7 @@ public final class TableNameUtil {
             throw new AggregateAnnotationMissingException(String.format("%s not annotated with %s", aggregateClass.getName(), Aggregate.class.getName()));
         }
 
-        if(!tableName.matches("^\\w+$")) {
+        if(!tableName.matches(RegexPattern.IS_ALPHANUMERIC)) {
             throw new AggregateAnnotationInvalidFormatException(
                 String.format("%s: tableName can only contain alphanumerical characters including '_'", aggregateClass.getName()));
         }
