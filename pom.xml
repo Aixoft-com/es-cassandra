@@ -70,6 +70,7 @@
 
     <build>
         <plugins>
+            <!-- INTEGRATION TESTS -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -79,9 +80,6 @@
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
-                        <configuration>
-
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
