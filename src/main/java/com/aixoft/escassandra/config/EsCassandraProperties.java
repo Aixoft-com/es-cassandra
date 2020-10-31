@@ -1,5 +1,6 @@
 package com.aixoft.escassandra.config;
 
+import com.aixoft.escassandra.config.constants.RegexPattern;
 import com.aixoft.escassandra.config.enums.SchemaAction;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.InvalidPropertiesFormatException;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
+import java.util.List;
 
 @Validated
 @ConfigurationProperties(prefix = "escassandra")
@@ -18,31 +21,28 @@ import java.util.InvalidPropertiesFormatException;
 @Getter
 @Slf4j
 public class EsCassandraProperties {
-    String ip = "127.0.0.1";
-    String port = "9042";
+    /**
+     * List of contact points (hostname:port).
+     */
+    List<String> contactPoints = List.of("127.0.0.1:9042");
+
+    /**
+     * The default policy will only include nodes from this datacenter in its query plans.
+     */
+    @Pattern(regexp = RegexPattern.IS_ALPHANUMERIC)
     String localDatacenter = "datacenter1";
+
+    /**
+     * The name of the keyspace that the session should initially be connected to.
+     */
+    @Pattern(regexp = RegexPattern.IS_ALPHANUMERIC)
     String keyspace = "eskeyspace";
+
+    /**
+     * Identify schema action to be performed at startup (default is NONE).
+     */
+    @Min(1)
     int replicationFactor = 1;
     SchemaAction schemaAction = SchemaAction.NONE;
-
-    public void setKeyspace(String keyspace) throws InvalidPropertiesFormatException {
-        validateAlphanumericValue("keyspace", keyspace);
-
-        this.keyspace = keyspace;
-    }
-
-    public void setLocalDatacenter(String localDatacenter) throws InvalidPropertiesFormatException {
-        validateAlphanumericValue("localDatacenter", localDatacenter);
-
-        this.localDatacenter = localDatacenter;
-    }
-
-    private void validateAlphanumericValue(String propertyName, String propertyValue) throws InvalidPropertiesFormatException {
-        if(!propertyValue.matches("^\\w+$")) {
-            throw new InvalidPropertiesFormatException(String.format("Property %s with value '%s' does not contain alphanumerical characters including '_'",
-                propertyName,
-                propertyValue));
-        }
-    }
 }
 

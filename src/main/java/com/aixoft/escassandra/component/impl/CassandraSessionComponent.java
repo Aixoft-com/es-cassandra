@@ -4,6 +4,7 @@ import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.component.registrar.AggregateComponent;
 import com.aixoft.escassandra.component.util.TableNameUtil;
 import com.aixoft.escassandra.config.EsCassandraProperties;
+import com.aixoft.escassandra.config.enums.SchemaAction;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -13,17 +14,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CassandraSessionComponent implements CassandraSession, InitializingBean {
-    private static final String CREATE_KEYSPACE_FORMAT = "CREATE KEYSPACE IF NOT EXISTS %s WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : %d};";
-    private static final String DROP_KEYSPACE_IF_EXISTS_FORMAT = "DROP KEYSPACE IF EXISTS %s";
-    private static final String CREATE_TABLE_IF_NOT_EXISTS_FORMAT = "CREATE TABLE IF NOT EXISTS %s.%s (aggregateId uuid, majorVersion int,minorVersion int, event text, PRIMARY KEY(aggregateId, majorVersion, minorVersion));";
-    private static final String CREATE_TABLE_FORMAT = "CREATE TABLE %s.%s (aggregateId uuid, majorVersion int, minorVersion int, event text, PRIMARY KEY(aggregateId, majorVersion, minorVersion));";
-    private static final String DROP_TABLE_IF_EXISTS_FORMAT = "DROP TABLE IF EXISTS %s.%s";
 
     private final EsCassandraProperties esCassandraProperties;
     private final AggregateComponent aggregateComponent;
@@ -47,49 +46,37 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
     }
 
     private void doSchemaAction() {
-        switch (esCassandraProperties.getSchemaAction()) {
-            case CREATE -> executeSchemaActionQuery(
-                    cqlSession -> cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
-                    (cqlSession, table) -> cqlSession.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table))
-                );
-            case CREATE_IF_NOT_EXISTS -> executeSchemaActionQuery(
-                    cqlSession -> cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
-                    (cqlSession, table) -> cqlSession.execute(String.format(CREATE_TABLE_IF_NOT_EXISTS_FORMAT, esCassandraProperties.getKeyspace(), table))
-                );
-            case RECREATE -> executeSchemaActionQuery(
-                    cqlSession -> cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor())),
-                    (cqlSession, table) -> {
-                        cqlSession.execute(String.format(DROP_TABLE_IF_EXISTS_FORMAT, esCassandraProperties.getKeyspace(), table));
-                        cqlSession.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table));
-                    }
-                );
-            case RECREATE_DROP_UNUSED -> executeSchemaActionQuery(
-                    cqlSession -> {
-                        cqlSession.execute(String.format(DROP_KEYSPACE_IF_EXISTS_FORMAT, esCassandraProperties.getKeyspace()));
-                        cqlSession.execute(String.format(CREATE_KEYSPACE_FORMAT, esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor()));
-                    },
-                    (cqlSession, table) -> cqlSession.execute(String.format(CREATE_TABLE_FORMAT, esCassandraProperties.getKeyspace(), table))
-                );
-        }
+        SchemaAction schemaAction = esCassandraProperties.getSchemaAction();
+
+        executeSchemaActionQuery(
+            schemaAction.getKeyspaceModifier(esCassandraProperties.getKeyspace(), esCassandraProperties.getReplicationFactor()),
+            schemaAction.getTableModifier(esCassandraProperties.getKeyspace())
+        );
     }
 
     private void executeSchemaActionQuery(
-        Consumer<CqlSession> sessionConsumer,
-        BiConsumer<CqlSession, String> tableSessionConsumer)
+        Consumer<CqlSession> keyspaceModifier,
+        BiConsumer<CqlSession, String> tableModifier)
     {
-        try(CqlSession tempSession = buildSession(false)) {
-            sessionConsumer.accept(tempSession);
+        if(keyspaceModifier != null || tableModifier != null) {
+            try(CqlSession tempSession = buildSession(false)) {
 
-            aggregateComponent.getClasses().stream()
-                .map(TableNameUtil::fromAggregateClass)
-                .forEach(table -> tableSessionConsumer.accept(tempSession, table));
+                if(keyspaceModifier != null) {
+                    keyspaceModifier.accept(tempSession);
+                }
+
+                if(tableModifier != null) {
+                    aggregateComponent.getClasses().stream()
+                        .map(TableNameUtil::fromAggregateClass)
+                        .forEach(table -> tableModifier.accept(tempSession, table));
+                }
+            }
         }
     }
     private CqlSession buildSession(boolean withKeyspace) {
         CqlSessionBuilder builder = new CqlSessionBuilder();
         builder
-            .addContactPoint(
-                new InetSocketAddress(esCassandraProperties.getIp(), Integer.parseInt(esCassandraProperties.getPort())))
+            .addContactPoints(getContactPoints())
             .withLocalDatacenter(esCassandraProperties.getLocalDatacenter());
 
         if(withKeyspace) {
@@ -99,6 +86,19 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
         }
 
         return builder.build();
+    }
+
+    private Collection<InetSocketAddress> getContactPoints() {
+        return esCassandraProperties.getContactPoints()
+            .stream()
+            .map(this::parseInetSocketAddress)
+            .collect(Collectors.toList());
+    }
+
+    private InetSocketAddress parseInetSocketAddress(String addressPortStr) {
+        URI uri = URI.create("//"  + addressPortStr);
+
+        return new InetSocketAddress(uri.getHost(), uri.getPort());
     }
 
     private DriverConfigLoader getDriverConfigLoader() {
