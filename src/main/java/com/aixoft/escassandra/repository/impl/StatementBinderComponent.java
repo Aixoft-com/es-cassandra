@@ -2,6 +2,7 @@ package com.aixoft.escassandra.repository.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.PreparedStatements;
+import com.aixoft.escassandra.exception.runtime.AggregateStatementNotFoundException;
 import com.aixoft.escassandra.repository.StatementBinder;
 import com.aixoft.escassandra.repository.converter.EventWritingConverter;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
@@ -24,6 +25,10 @@ public class StatementBinderComponent implements StatementBinder {
     @Override
     public Statement bindInsertEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, @NonNull List<EventDescriptor> eventDescriptors) {
         PreparedStatement preparedStatement = preparedStatements.getInsertPreparedStatement(aggregateClass);
+
+        if(preparedStatement == null) {
+            throw new AggregateStatementNotFoundException(String.format("Statement not found for %s, it might not be included in scanned package", aggregateClass));
+        }
 
         Statement<? extends Statement>  insertStatement;
         if(eventDescriptors.size() == 1) {

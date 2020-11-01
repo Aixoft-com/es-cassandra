@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
-@EnableCassandraEventSourcing(eventPackages = "com.aixoft.escassandra.it.service.impl", aggregatePackages = "com.aixoft.escassandra.it.service.impl")
+@EnableCassandraEventSourcing(eventPackages = "com.aixoft.escassandra.service.impl", aggregatePackages = "com.aixoft.escassandra.service.impl")
 @ContextConfiguration(classes = TestEsCassandraConfiguration.class)
 class ReactiveCassandraAggregateStoreIT {
     @Autowired

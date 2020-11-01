@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 @ExtendWith(SpringExtension.class)
-@EnableCassandraEventSourcing(eventPackages = "com.aixoft.escassandra.it.repository.impl", aggregatePackages = "com.aixoft.escassandra.it.repository.impl")
+@EnableCassandraEventSourcing(eventPackages = "com.aixoft.escassandra.repository.impl", aggregatePackages = "com.aixoft.escassandra.repository.impl")
 @ContextConfiguration(classes = TestEsCassandraConfiguration.class)
 class ReactiveCassandraEventDescriptorRepositoryIT {
 
