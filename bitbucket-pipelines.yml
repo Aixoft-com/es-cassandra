@@ -40,13 +40,14 @@ definitions:
         services:
           - cassandra
 pipelines:
-  default:
-    - step: *build-test
   branches:
     master:
       - step: *build-test-sonarcloud
+      - step: *build-test
     development:
       - step: *build-test-sonarcloud
+      - step: *build-test
   pull-requests:
     '**':
       - step: *build-test-sonarcloud
+      - step: *build-test
