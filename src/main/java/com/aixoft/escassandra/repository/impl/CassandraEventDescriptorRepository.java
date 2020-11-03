@@ -2,15 +2,14 @@ package com.aixoft.escassandra.repository.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.CassandraSession;
-import com.aixoft.escassandra.component.PreparedStatements;
 import com.aixoft.escassandra.repository.EventDescriptorRepository;
+import com.aixoft.escassandra.repository.StatementBinder;
 import com.aixoft.escassandra.repository.converter.EventReadingConverter;
-import com.aixoft.escassandra.repository.converter.EventWritingConverter;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.aixoft.escassandra.repository.util.EventDescriptorRowUtil;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
@@ -21,70 +20,47 @@ import java.util.stream.Collectors;
 
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CassandraEventDescriptorRepository implements EventDescriptorRepository {
-    Session session;
-    PreparedStatements preparedStatements;
-    EventWritingConverter eventWritingConverter;
+    CqlSession session;
+    StatementBinder statementBinder;
     EventReadingConverter eventReadingConverter;
 
-    public CassandraEventDescriptorRepository(@NonNull CassandraSession cassandraSession,
-                                              @NonNull PreparedStatements preparedStatements,
-                                              @NonNull EventWritingConverter eventWritingConverter,
-                                              @NonNull EventReadingConverter eventReadingConverter) {
+    public CassandraEventDescriptorRepository(CassandraSession cassandraSession, StatementBinder statementBinder, EventReadingConverter eventReadingConverter) {
         this.session = cassandraSession.getSession();
-        this.preparedStatements = preparedStatements;
-        this.eventWritingConverter = eventWritingConverter;
+        this.statementBinder = statementBinder;
         this.eventReadingConverter = eventReadingConverter;
     }
 
     @Override
-    public void insertAll(@NonNull Class<? extends AggregateRoot> aggregateClass,
+    public boolean insertAll(@NonNull Class<? extends AggregateRoot> aggregateClass,
                           @NonNull UUID aggregateId,
                           @NonNull List<EventDescriptor> newEventDescriptors) {
-        PreparedStatement preparedStatement = preparedStatements.getInsertPreparedStatement(aggregateClass);
-
-        newEventDescriptors.forEach(eventDescriptor -> {
-            session.execute(preparedStatement.bind(
-                aggregateId,
-                eventDescriptor.getMajorVersion(),
-                eventDescriptor.getMinorVersion(),
-                eventDescriptor.getEventId(),
-                eventWritingConverter.convert(eventDescriptor.getEvent()))
-            );
-        });
+        return session.execute(statementBinder.bindInsertEventDescriptors(aggregateClass, aggregateId, newEventDescriptors))
+            .wasApplied();
     }
 
     @Override
     public List<EventDescriptor> findAllByAggregateId(@NonNull Class<? extends AggregateRoot> aggregateClass,
                                                       @NonNull UUID aggregateId) {
-        PreparedStatement preparedStatement = preparedStatements.getSelectAllPreparedStatement(aggregateClass);
-
-        ResultSet resultSet = session.execute(preparedStatement.bind(aggregateId));
-
-        return resultSet.all().stream()
-            .map(this::getEventDescriptor)
-            .collect(Collectors.toList());
+        return executeFindStatement(
+            statementBinder.bindFindAllEventDescriptors(aggregateClass, aggregateId)
+        );
     }
 
     @Override
-    public List<EventDescriptor> findAllByAggregateIdSinceLastSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
-                                                                       @NonNull UUID aggregateId,
-                                                                       int snapshotVersion) {
-        PreparedStatement preparedStatement = preparedStatements.getSelectAllSinceSnapshotPreparedStatement(aggregateClass);
-
-        ResultSet resultSet = session.execute(preparedStatement.bind(aggregateId, snapshotVersion));
-
-        return resultSet.all().stream()
-            .map(this::getEventDescriptor)
-            .collect(Collectors.toList());
+    public List<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
+                                                                   @NonNull UUID aggregateId,
+                                                                   int snapshotVersion) {
+        return executeFindStatement(
+            statementBinder.bindFindAllSinceLastSnapshotEventDescriptors(aggregateClass, aggregateId, snapshotVersion)
+        );
     }
 
-    private EventDescriptor getEventDescriptor(Row row) {
-        return new EventDescriptor(
-            row.getInt(1),
-            row.getInt(2),
-            row.getUUID(3),
-            eventReadingConverter.convert(row.getString(4))
-        );
+    private List<EventDescriptor> executeFindStatement(BoundStatement statement) {
+        ResultSet resultSet = session.execute(statement);
+
+        return resultSet.all().stream()
+            .map(row -> EventDescriptorRowUtil.toEventDescriptor(row, eventReadingConverter))
+            .collect(Collectors.toList());
     }
 
 }

@@ -1,13 +1,9 @@
 package com.aixoft.escassandra.annotation;
 
-import com.aixoft.escassandra.component.impl.AggregateSubscribedMethodsComponent;
-import com.aixoft.escassandra.component.impl.CassandraSessionComponent;
-import com.aixoft.escassandra.component.impl.PreparedStatementsComponent;
 import com.aixoft.escassandra.config.CassandraEventSourcingBeansRegistrar;
-import com.aixoft.escassandra.config.EsCassandraProperties;
-import com.aixoft.escassandra.repository.impl.CassandraEventDescriptorRepository;
-import com.aixoft.escassandra.service.impl.AutoconfiguredEventRouter;
-import com.aixoft.escassandra.service.impl.CassandraAggregateStore;
+import com.aixoft.escassandra.config.EsCommonConfiguration;
+import com.aixoft.escassandra.config.EsConfiguration;
+import com.aixoft.escassandra.config.EsReactiveConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -18,14 +14,11 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Import({EsCassandraProperties.class,
+@Import({
     CassandraEventSourcingBeansRegistrar.class,
-    CassandraSessionComponent.class,
-    AggregateSubscribedMethodsComponent.class,
-    PreparedStatementsComponent.class,
-    AutoconfiguredEventRouter.class,
-    CassandraEventDescriptorRepository.class,
-    CassandraAggregateStore.class
+    EsCommonConfiguration.class,
+    EsConfiguration.class,
+    EsReactiveConfiguration.class
 })
 @Configuration
 public @interface EnableCassandraEventSourcing {

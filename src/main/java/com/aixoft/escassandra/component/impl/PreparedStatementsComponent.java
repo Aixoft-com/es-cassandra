@@ -1,13 +1,13 @@
 package com.aixoft.escassandra.component.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
-import com.aixoft.escassandra.annotation.Aggregate;
 import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.component.PreparedStatements;
 import com.aixoft.escassandra.component.registrar.AggregateComponent;
-import com.aixoft.escassandra.exception.runtime.AggregateAnnotationMissingException;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
+import com.aixoft.escassandra.component.util.TableNameUtil;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
@@ -18,7 +18,7 @@ import java.util.Map;
 
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PreparedStatementsComponent implements PreparedStatements {
-    private final static String INSERT_STATEMENT_FORMAT = "INSERT INTO %s (aggregateId, majorVersion, minorVersion, eventId, event) VALUES (?, ?, ?, ?, ?)";
+    private final static String INSERT_STATEMENT_FORMAT = "INSERT INTO %s (aggregateId, majorVersion, minorVersion, event) VALUES (?, ?, ?, ?) IF NOT EXISTS";
     private final static String SELECT_ALL_STATEMENT_FORMAT = "SELECT * FROM %s WHERE aggregateId = ?";
     private final static String SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT = "SELECT * FROM %s WHERE aggregateId = ? and majorVersion >= ?";
 
@@ -47,26 +47,13 @@ public class PreparedStatementsComponent implements PreparedStatements {
         return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateClass);
     }
 
-    private void initPreparedStatements(List<Class> aggregateClasses, @NonNull Session session) {
+    private void initPreparedStatements(List<Class> aggregateClasses, @NonNull CqlSession session) {
         aggregateClasses.forEach(aggregateClass -> {
-            String partitionKey = getPartitionKey(aggregateClass);
+            String tableName = TableNameUtil.fromAggregateClass(aggregateClass);
 
-            insertStatementsByAggregateClass.put(aggregateClass, session.prepare(String.format(INSERT_STATEMENT_FORMAT, partitionKey)));
-            selectAllStatementsByAggregateClass.put(aggregateClass, session.prepare(String.format(SELECT_ALL_STATEMENT_FORMAT, partitionKey)));
-            selectAllSinceSnapshotStatementsByAggregateClass.put(aggregateClass, session.prepare(String.format(SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT, partitionKey)));
+            insertStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(INSERT_STATEMENT_FORMAT, tableName))));
+            selectAllStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_STATEMENT_FORMAT, tableName))));
+            selectAllSinceSnapshotStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT, tableName))));
         });
-    }
-
-    private static String getPartitionKey(Class<? extends AggregateRoot> aggregateClass) {
-        Aggregate annotation = aggregateClass.getAnnotation(Aggregate.class);
-
-        String tableName;
-        if (annotation != null) {
-            tableName = annotation.partitionKey();
-        } else {
-            throw new AggregateAnnotationMissingException(String.format("%s not annotated with %s", aggregateClass.getName(), Aggregate.class.getName()));
-        }
-
-        return tableName;
     }
 }

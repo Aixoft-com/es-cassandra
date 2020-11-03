@@ -10,7 +10,6 @@ import com.aixoft.escassandra.repository.EventDescriptorRepository;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.service.AggregateStore;
 import com.aixoft.escassandra.service.EventRouter;
-import com.datastax.driver.core.utils.UUIDs;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,45 +28,44 @@ public class CassandraAggregateStore implements AggregateStore {
     EventRouter eventRouter;
 
     @Override
-    public void save(AggregateRoot aggregate) {
-        //TODO: validate if last committed event's version is as expected, if not then throw ConcurrentAggregateModificationException
-        //TODO: if some event does not require validation then pulling last event for version could be skipped (consider if snapshot happen then change might not be included)
-
+    public boolean save(AggregateRoot aggregate) {
         List<EventDescriptor> newEventDescriptors = new ArrayList<>(aggregate.getUncommittedChanges().size());
 
         EventVersion currentEventVersion = aggregate.getCommittedVersion();
         if (currentEventVersion == null) {
-            currentEventVersion = new EventVersion(0, 0);
+            currentEventVersion = EventVersion.initial();
         }
 
         for (Event event : aggregate.getUncommittedChanges()) {
             currentEventVersion = currentEventVersion.getNext(event instanceof SnapshotEvent);
 
             newEventDescriptors.add(new EventDescriptor(
-                currentEventVersion.getSnapshotNumber(),
-                currentEventVersion.getEventNumber(),
-                UUIDs.timeBased(),
+                currentEventVersion,
                 event)
             );
         }
 
-        eventDescriptorRepository.insertAll(aggregate.getClass(), aggregate.getId(), newEventDescriptors);
+        boolean result = eventDescriptorRepository.insertAll(aggregate.getClass(), aggregate.getId(), newEventDescriptors);
 
-        aggregate.setCommittedVersion(currentEventVersion);
+        if(result) {
+            aggregate.setCommittedVersion(currentEventVersion);
 
-        for (EventDescriptor eventDescriptor : newEventDescriptors) {
-            Event event = eventDescriptor.getEvent();
+            for (EventDescriptor eventDescriptor : newEventDescriptors) {
+                Event event = eventDescriptor.getEvent();
 
-            //TODO: published aggregate shall be immutable
-            apply(event, aggregate);
-            eventRouter.publish(event, aggregate);
+                //TODO: published aggregate shall be immutable
+                apply(event, aggregate);
+                eventRouter.publish(event, aggregate);
+            }
+
+            aggregate.markChangesAsCommitted();
         }
 
-        aggregate.markChangesAsCommitted();
+        return result;
     }
 
     @Override
-    public <T extends AggregateRoot> T findById(UUID aggregateId, Class<T> aggregateClass) {
+    public <T extends AggregateRoot> T loadById(UUID aggregateId, Class<T> aggregateClass) {
         T aggregateRoot = createAggregate(aggregateId, aggregateClass);
 
         List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateId(aggregateClass, aggregateId);
@@ -78,10 +76,10 @@ public class CassandraAggregateStore implements AggregateStore {
     }
 
     @Override
-    public <T extends AggregateRoot> T findById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
+    public <T extends AggregateRoot> T loadById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
         T aggregateRoot = createAggregate(aggregateId, aggregateClass);
 
-        List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateIdSinceLastSnapshot(aggregateClass, aggregateId, baseSnapshotVersion);
+        List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateIdSinceSnapshot(aggregateClass, aggregateId, baseSnapshotVersion);
 
         loadFromHistory(aggregateRoot, eventDescriptors);
 
@@ -92,7 +90,7 @@ public class CassandraAggregateStore implements AggregateStore {
         eventDescriptors.forEach(eventDescriptor -> apply(eventDescriptor.getEvent(), aggregateRoot));
 
         EventDescriptor lastEventDescriptor = eventDescriptors.get(eventDescriptors.size() - 1);
-        aggregateRoot.setCommittedVersion(new EventVersion(lastEventDescriptor.getMajorVersion(), lastEventDescriptor.getMinorVersion()));
+        aggregateRoot.setCommittedVersion(lastEventDescriptor.getEventVersion());
     }
 
     private void apply(Event event, AggregateRoot aggregateRoot) {

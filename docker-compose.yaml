@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  cassandra:
+    image: cassandra
+    ports:
+      - 9042:9042
+    volumes:
+      - ./docker/cassandra/config/collectd.cassandra.conf:/etc/collectd/collectd.conf
+      - ./docker/cassandra/config/prometheus.yml:/prometheus/prometheus.yml
+      - ./docker/cassandra/data/cassandra:/var/lib/cassandra

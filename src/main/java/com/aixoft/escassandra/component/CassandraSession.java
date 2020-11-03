@@ -1,7 +1,7 @@
 package com.aixoft.escassandra.component;
 
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 
 public interface CassandraSession {
-    Session getSession();
+    CqlSession getSession();
 }
