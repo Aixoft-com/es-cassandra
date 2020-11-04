@@ -9,7 +9,7 @@ class EventVersionTest {
 
     @Test
     @DisplayName("Initial event version should be 0.0")
-    void shouldHaveInitialVersionZeroZero() {
+    public void shouldHaveInitialVersionZeroZero() {
 
         // when
         EventVersion ev = EventVersion.initial();
