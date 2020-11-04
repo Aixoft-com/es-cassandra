@@ -24,7 +24,7 @@ definitions:
           - maven
           - sonar
         script:
-          - ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          - ./mvnw -B verify sonar:sonar
         services:
           - cassandra
         artifacts:
