@@ -18,7 +18,7 @@ import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EventClassByNameReflection {
-    public final static Map<String, Class<? extends Event>> find(@NonNull String[] basePackages) {
+    public static final Map<String, Class<? extends Event>> find(@NonNull String[] basePackages) {
         Map<String, Class<? extends Event>> eventClassByName = new HashMap<>();
 
         final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(true);
