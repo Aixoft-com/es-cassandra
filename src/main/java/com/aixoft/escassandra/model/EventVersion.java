@@ -16,5 +16,8 @@ public class EventVersion {
         return new EventVersion(0, 0);
     }
 
+    public EventVersion getPrevious() {
+        return null;
+    }
 
 }
