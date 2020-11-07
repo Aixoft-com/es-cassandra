@@ -42,7 +42,7 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
     public void afterPropertiesSet() {
         doSchemaAction();
 
-        session = buildSession(true);
+        session = buildSession(false);
     }
 
     private void doSchemaAction() {
@@ -59,7 +59,7 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
         BiConsumer<CqlSession, String> tableModifier)
     {
         if(keyspaceModifier != null || tableModifier != null) {
-            try(CqlSession tempSession = buildSession(false)) {
+            try(CqlSession tempSession = buildSession(true)) {
 
                 if(keyspaceModifier != null) {
                     keyspaceModifier.accept(tempSession);
@@ -73,19 +73,19 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
             }
         }
     }
-    private CqlSession buildSession(boolean withKeyspace) {
+    private CqlSession buildSession(boolean forSchemaAction) {
         CqlSessionBuilder builder = new CqlSessionBuilder();
-        builder
-            .addContactPoints(getContactPoints())
-            .withLocalDatacenter(esCassandraProperties.getLocalDatacenter());
 
-        if(withKeyspace) {
-            builder.withKeyspace(esCassandraProperties.getKeyspace());
+        if(forSchemaAction) {
+            builder.withConfigLoader(getDriverConfigLoaderWithExtendedRequestTimeout());
         } else {
-            builder.withConfigLoader(getDriverConfigLoader());
+            builder.withKeyspace(esCassandraProperties.getKeyspace());
         }
 
-        return builder.build();
+        return builder
+            .withLocalDatacenter(esCassandraProperties.getLocalDatacenter())
+            .addContactPoints(getContactPoints())
+            .build();
     }
 
     private Collection<InetSocketAddress> getContactPoints() {
@@ -101,7 +101,7 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
         return new InetSocketAddress(uri.getHost(), uri.getPort());
     }
 
-    private DriverConfigLoader getDriverConfigLoader() {
+    private DriverConfigLoader getDriverConfigLoaderWithExtendedRequestTimeout() {
         return DriverConfigLoader.programmaticBuilder()
             .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(20))
             .build();

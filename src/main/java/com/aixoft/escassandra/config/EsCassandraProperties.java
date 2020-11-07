@@ -23,11 +23,13 @@ import java.util.List;
 public class EsCassandraProperties {
     /**
      * List of contact points (hostname:port).
+     * It take precedence over property defined in driver configuration.
      */
     List<String> contactPoints = List.of("127.0.0.1:9042");
 
     /**
      * The default policy will only include nodes from this datacenter in its query plans.
+     * It take precedence over property defined in driver configuration.
      */
     @Pattern(regexp = RegexPattern.IS_ALPHANUMERIC)
     String localDatacenter = "datacenter1";
@@ -40,9 +42,15 @@ public class EsCassandraProperties {
 
     /**
      * Identify schema action to be performed at startup (default is NONE).
+     * Keyspace is created with 'SimpleStrategy' and replication defined by 'replicationFactor' property.
+     */
+    SchemaAction schemaAction = SchemaAction.NONE;
+
+    /**
+     * Identify replica factor used for keyspace creation.
+     * Relevant only if SchemaAction is different then NONE.
      */
     @Min(1)
     int replicationFactor = 1;
-    SchemaAction schemaAction = SchemaAction.NONE;
 }
 
