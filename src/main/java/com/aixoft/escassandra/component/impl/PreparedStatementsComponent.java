@@ -47,7 +47,7 @@ public class PreparedStatementsComponent implements PreparedStatements {
         return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateClass);
     }
 
-    private void initPreparedStatements(List<Class> aggregateClasses, @NonNull CqlSession session) {
+    private void initPreparedStatements(List<Class<? extends AggregateRoot>> aggregateClasses, @NonNull CqlSession session) {
         aggregateClasses.forEach(aggregateClass -> {
             String tableName = TableNameUtil.fromAggregateClass(aggregateClass);
 

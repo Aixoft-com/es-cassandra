@@ -1,22 +1,17 @@
 package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
-import com.aixoft.escassandra.component.AggregateSubscribedMethods;
-import com.aixoft.escassandra.exception.runtime.AggregateCreationException;
-import com.aixoft.escassandra.model.Event;
-import com.aixoft.escassandra.model.EventVersion;
-import com.aixoft.escassandra.model.SnapshotEvent;
+import com.aixoft.escassandra.component.AggregatePublisher;
 import com.aixoft.escassandra.repository.EventDescriptorRepository;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.service.AggregateStore;
-import com.aixoft.escassandra.service.EventRouter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -24,88 +19,52 @@ import java.util.UUID;
 @Slf4j
 public class CassandraAggregateStore implements AggregateStore {
     EventDescriptorRepository eventDescriptorRepository;
-    AggregateSubscribedMethods aggregateSubscribedMethods;
-    EventRouter eventRouter;
+    AggregatePublisher aggregatePublisher;
 
     @Override
-    public boolean save(AggregateRoot aggregate) {
-        List<EventDescriptor> newEventDescriptors = new ArrayList<>(aggregate.getUncommittedChanges().size());
+    public <T extends AggregateRoot> Optional<T> save(T aggregate) {
+        List<EventDescriptor> newEventDescriptors = EventDescriptor.fromEvents(aggregate.getUncommittedChanges(), aggregate.getCommittedVersion());
 
-        EventVersion currentEventVersion = aggregate.getCommittedVersion();
-        if (currentEventVersion == null) {
-            currentEventVersion = EventVersion.initial();
-        }
+        boolean insertSucceed = eventDescriptorRepository.insertAll(aggregate.getClass(), aggregate.getId(), newEventDescriptors);
 
-        for (Event event : aggregate.getUncommittedChanges()) {
-            currentEventVersion = currentEventVersion.getNext(event instanceof SnapshotEvent);
-
-            newEventDescriptors.add(new EventDescriptor(
-                currentEventVersion,
-                event)
-            );
-        }
-
-        boolean result = eventDescriptorRepository.insertAll(aggregate.getClass(), aggregate.getId(), newEventDescriptors);
-
-        if(result) {
-            aggregate.setCommittedVersion(currentEventVersion);
-
-            for (EventDescriptor eventDescriptor : newEventDescriptors) {
-                Event event = eventDescriptor.getEvent();
-
-                //TODO: published aggregate shall be immutable
-                apply(event, aggregate);
-                eventRouter.publish(event, aggregate);
-            }
-
-            aggregate.markChangesAsCommitted();
+        Optional<T> result;
+        if(insertSucceed) {
+            result = Optional.of(aggregatePublisher.applyAndPublish(aggregate, newEventDescriptors));
+        } else {
+            result = Optional.empty();
         }
 
         return result;
     }
 
     @Override
-    public <T extends AggregateRoot> T loadById(UUID aggregateId, Class<T> aggregateClass) {
-        T aggregateRoot = createAggregate(aggregateId, aggregateClass);
-
+    public <T extends AggregateRoot> Optional<T> loadById(UUID aggregateId, Class<T> aggregateClass) {
         List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateId(aggregateClass, aggregateId);
 
-        loadFromHistory(aggregateRoot, eventDescriptors);
-
-        return aggregateRoot;
+        return loadFromEventDescriptors(aggregateId, aggregateClass, eventDescriptors);
     }
 
     @Override
-    public <T extends AggregateRoot> T loadById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
-        T aggregateRoot = createAggregate(aggregateId, aggregateClass);
-
+    public <T extends AggregateRoot> Optional<T> loadById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
         List<EventDescriptor> eventDescriptors = eventDescriptorRepository.findAllByAggregateIdSinceSnapshot(aggregateClass, aggregateId, baseSnapshotVersion);
 
-        loadFromHistory(aggregateRoot, eventDescriptors);
-
-        return aggregateRoot;
+        return loadFromEventDescriptors(aggregateId, aggregateClass, eventDescriptors);
     }
 
-    private void loadFromHistory(AggregateRoot aggregateRoot, List<EventDescriptor> eventDescriptors) {
-        eventDescriptors.forEach(eventDescriptor -> apply(eventDescriptor.getEvent(), aggregateRoot));
+    private <T extends AggregateRoot> Optional<T> loadFromEventDescriptors(UUID aggregateId, Class<T> aggregateClass, List<EventDescriptor> eventDescriptors) {
+        Optional<T> result;
+        if(!eventDescriptors.isEmpty()) {
+            T aggregate = AggregateRoot.create(aggregateId, aggregateClass);
 
-        EventDescriptor lastEventDescriptor = eventDescriptors.get(eventDescriptors.size() - 1);
-        aggregateRoot.setCommittedVersion(lastEventDescriptor.getEventVersion());
-    }
+            for(EventDescriptor eventDescriptor: eventDescriptors) {
+                aggregate = aggregatePublisher.apply(aggregate, eventDescriptor);
+            }
 
-    private void apply(Event event, AggregateRoot aggregateRoot) {
-        aggregateSubscribedMethods.invokeAggregateMethodForEvent(aggregateRoot, event);
-    }
-
-    private <T extends AggregateRoot> T createAggregate(UUID aggregateId, Class<T> aggregateClass) {
-        T aggregateRoot;
-        try {
-            aggregateRoot = aggregateClass.getDeclaredConstructor(UUID.class).newInstance(aggregateId);
-        } catch (ReflectiveOperationException ex) {
-            log.error(ex.getMessage(), ex);
-            throw new AggregateCreationException(String.format("Not able to create instance of '%s'", aggregateClass.getName()));
+            result = Optional.of(aggregate);
+        } else {
+            result = Optional.empty();
         }
-        return aggregateRoot;
-    }
 
+        return result;
+    }
 }

@@ -30,7 +30,7 @@ public class AggregateSubscribedMethodsComponent implements AggregateSubscribedM
             Method handlerMethod = eventHandlerWithMethod.get(event.getClass());
 
             if (handlerMethod != null) {
-                handlerMethod.invoke(aggregateRoot, event, aggregateRoot);
+                handlerMethod.invoke(aggregateRoot, event);
             }
         }
     }

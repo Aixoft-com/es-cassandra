@@ -24,17 +24,17 @@ public class AggregateMock extends AggregateRoot {
     }
 
     @Subscribe
-    public void apply(AggregateInitialized aggregateInitialized, AggregateRoot aggregateRoot) {
+    public void apply(AggregateInitialized aggregateInitialized) {
         userName = aggregateInitialized.getUserName();
     }
 
     @Subscribe
-    public void apply(PointsAdded pointsAdded, AggregateRoot aggregateRoot) {
+    public void apply(PointsAdded pointsAdded) {
         points += pointsAdded.getPoints();
     }
 
     @Subscribe
-    public void apply(SnapshotCreated snapshotCreated, AggregateRoot aggregateRoot) {
+    public void apply(SnapshotCreated snapshotCreated) {
         userName = snapshotCreated.getUserName();
         points = snapshotCreated.getPoints();
     }

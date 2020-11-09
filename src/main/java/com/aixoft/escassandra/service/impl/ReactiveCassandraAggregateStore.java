@@ -1,22 +1,19 @@
 package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
-import com.aixoft.escassandra.component.AggregateSubscribedMethods;
-import com.aixoft.escassandra.exception.runtime.AggregateCreationException;
-import com.aixoft.escassandra.model.Event;
-import com.aixoft.escassandra.model.EventVersion;
-import com.aixoft.escassandra.model.SnapshotEvent;
+import com.aixoft.escassandra.component.AggregatePublisher;
+import com.aixoft.escassandra.exception.AggregateNotFoundException;
+import com.aixoft.escassandra.exception.AggregateFailedSaveException;
 import com.aixoft.escassandra.repository.ReactiveEventDescriptorRepository;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
-import com.aixoft.escassandra.service.EventRouter;
 import com.aixoft.escassandra.service.ReactiveAggregateStore;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,90 +22,37 @@ import java.util.UUID;
 @Slf4j
 public class ReactiveCassandraAggregateStore implements ReactiveAggregateStore {
     ReactiveEventDescriptorRepository eventDescriptorRepository;
-    AggregateSubscribedMethods aggregateSubscribedMethods;
-    EventRouter eventRouter;
+    AggregatePublisher aggregatePublisher;
 
     @Override
-    public Mono<EventVersion> save(AggregateRoot aggregate) {
-        List<EventDescriptor> newEventDescriptors = new ArrayList<>(aggregate.getUncommittedChanges().size());
+    public <T extends AggregateRoot> Mono<T> save(T aggregate) {
 
-        EventVersion currentEventVersion = aggregate.getCommittedVersion();
-        if (currentEventVersion == null) {
-            currentEventVersion = EventVersion.initial();
-        }
-
-        for (Event event : aggregate.getUncommittedChanges()) {
-            currentEventVersion = currentEventVersion.getNext(event instanceof SnapshotEvent);
-
-            newEventDescriptors.add(new EventDescriptor(
-                currentEventVersion,
-                event)
-            );
-        }
-
-        EventVersion lastEvent = currentEventVersion;
+        List<EventDescriptor> newEventDescriptors = EventDescriptor.fromEvents(aggregate.getUncommittedChanges(), aggregate.getCommittedVersion());
 
         return eventDescriptorRepository.insertAll(aggregate.getClass(), aggregate.getId(), newEventDescriptors)
-            .doOnNext(res -> {
-                    if(Boolean.TRUE.equals(res)) {
-                        //TODO: Aggregate shall be cloned here
-                        aggregate.setCommittedVersion(lastEvent);
-
-                        for (EventDescriptor eventDescriptor : newEventDescriptors) {
-                            Event event = eventDescriptor.getEvent();
-
-                            //TODO: published aggregate shall be immutable
-                            apply(event, aggregate);
-                            eventRouter.publish(event, aggregate);
-                        }
-
-                        aggregate.markChangesAsCommitted();
-                    }
-                }
-            )
-            .flatMap(inserted -> Boolean.TRUE.equals(inserted) ? Mono.just(lastEvent) : Mono.empty());
+            .flatMap(inserted -> Boolean.TRUE.equals(inserted) ?
+                Mono.fromCallable(() -> aggregatePublisher.applyAndPublish(aggregate, newEventDescriptors))
+                : Mono.error(AggregateFailedSaveException::new));
     }
 
     @Override
     public <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, Class<T> aggregateClass) {
 
          return eventDescriptorRepository.findAllByAggregateId(aggregateClass, aggregateId)
+            .switchIfEmpty(Flux.error(AggregateNotFoundException::new))
             .reduceWith(
-                () -> createAggregate(aggregateId, aggregateClass),
-                this::loadFromHistory
+                () -> AggregateRoot.create(aggregateId, aggregateClass),
+                aggregatePublisher::apply
             );
     }
 
     @Override
     public <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, int baseSnapshotVersion, Class<T> aggregateClass) {
         return eventDescriptorRepository.findAllByAggregateIdSinceSnapshot(aggregateClass, aggregateId, baseSnapshotVersion)
+            .switchIfEmpty(Flux.error(AggregateNotFoundException::new))
             .reduceWith(
-                () -> createAggregate(aggregateId, aggregateClass),
-                this::loadFromHistory
+                () -> AggregateRoot.create(aggregateId, aggregateClass),
+                aggregatePublisher::apply
             );
     }
-
-    private <T extends AggregateRoot> T loadFromHistory(T aggregateRoot, EventDescriptor eventDescriptor) {
-        apply(eventDescriptor.getEvent(), aggregateRoot);
-
-        aggregateRoot.setCommittedVersion(eventDescriptor.getEventVersion());
-
-        return aggregateRoot;
-    }
-
-    private void apply(Event event, AggregateRoot aggregateRoot) {
-        aggregateSubscribedMethods.invokeAggregateMethodForEvent(aggregateRoot, event);
-    }
-
-    private <T extends AggregateRoot> T createAggregate(UUID aggregateId, Class<T> aggregateClass) {
-        T aggregateRoot;
-        try {
-            aggregateRoot = aggregateClass.getDeclaredConstructor(UUID.class).newInstance(aggregateId);
-        } catch (ReflectiveOperationException ex) {
-            log.error(ex.getMessage(), ex);
-            throw new AggregateCreationException(String.format("Not able to create instance of '%s'", aggregateClass.getName()));
-        }
-        return aggregateRoot;
-    }
-
 }

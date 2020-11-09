@@ -1,5 +1,6 @@
 package com.aixoft.escassandra.config;
 
+import com.aixoft.escassandra.component.impl.AggregatePublisherComponent;
 import com.aixoft.escassandra.component.impl.AggregateSubscribedMethodsComponent;
 import com.aixoft.escassandra.component.impl.CassandraSessionComponent;
 import com.aixoft.escassandra.component.impl.PreparedStatementsComponent;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Import;
     AggregateSubscribedMethodsComponent.class,
     PreparedStatementsComponent.class,
     StatementBinderComponent.class,
-    AutoconfiguredEventRouter.class})
+    AutoconfiguredEventRouter.class,
+    AggregatePublisherComponent.class})
 public class EsCommonConfiguration {
 }

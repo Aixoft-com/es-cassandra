@@ -16,41 +16,28 @@ import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class EventWithHandlerMethodByAggregateReflection {
-    public static Map<Class<? extends AggregateRoot>, Map<Class<?>, Method>> find(@NonNull List<Class> aggregateClasses) {
+
+    public static Map<Class<? extends AggregateRoot>, Map<Class<?>, Method>> find(@NonNull List<Class<? extends AggregateRoot>> aggregateClasses) {
         Map<Class<? extends AggregateRoot>, Map<Class<?>, Method>> eventWithHandlerMethodByAggregateRoot = new HashMap<>();
 
-        aggregateClasses.forEach(aggregateClass -> {
-            Arrays.stream(aggregateClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Subscribe.class))
-                .forEach(method -> addAggregateSubscribedMethodsToMap(aggregateClass, method, eventWithHandlerMethodByAggregateRoot));
-        });
+        aggregateClasses.forEach(aggregateClass -> Arrays.stream(aggregateClass.getDeclaredMethods())
+            .filter(method -> method.isAnnotationPresent(Subscribe.class))
+            .forEach(method -> addAggregateSubscribedMethodsToMap(aggregateClass, method, eventWithHandlerMethodByAggregateRoot)));
 
         return eventWithHandlerMethodByAggregateRoot;
     }
-
 
     private static void addAggregateSubscribedMethodsToMap(Class<? extends AggregateRoot> aggregateClass,
                                                            Method method, Map<Class<? extends AggregateRoot>,
         Map<Class<?>, Method>> eventWithHandlerMethodByAggregateRoot) {
 
-        if (method.getParameterCount() != 2) {
+        if (method.getParameterCount() != 1) {
             throw new InvalidEventHandlerDefinitionException(
-                String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but exactly two are allowed",
+                String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but only one is allowed",
                     method.getName(),
                     aggregateClass.getName(),
                     Subscribe.class.getName(),
                     method.getParameterCount())
-            );
-        }
-
-        Class<?> publisherParameterType = method.getParameterTypes()[1];
-        if (!AggregateRoot.class.isAssignableFrom(publisherParameterType)) {
-            throw new InvalidEventHandlerDefinitionException(
-                String.format("Method '%s' in class '%s' annotated with '%s' has 2nd parameter which in not subtype of '%s'",
-                    method.getName(),
-                    aggregateClass.getName(),
-                    Subscribe.class.getName(),
-                    AggregateRoot.class.getName())
             );
         }
 
@@ -64,8 +51,6 @@ public final class EventWithHandlerMethodByAggregateReflection {
                     Event.class.getName())
             );
         }
-
-        method.setAccessible(true);
 
         Map<Class<?>, Method> eventHandlerWithMethod = eventWithHandlerMethodByAggregateRoot.get(aggregateClass);
 
