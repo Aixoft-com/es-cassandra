@@ -3,7 +3,6 @@ package com.aixoft.escassandra.component.impl;
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.AggregatePublisher;
 import com.aixoft.escassandra.component.AggregateSubscribedMethods;
-import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.service.EventRouter;
 import lombok.AccessLevel;

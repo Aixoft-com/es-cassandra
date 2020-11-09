@@ -1,15 +1,9 @@
-package com.aixoft.escassandra.config.enums;
+package com.aixoft.escassandra.config.constants;
 
-public enum RegexPattern {
-    IS_ALPHANUMERIC("^\\w+$");
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-    private String pattern;
-
-    RegexPattern(String pattern) {
-        this.pattern = pattern;
-    }
-
-    public String getPattern() {
-        return pattern;
-    }
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class RegexPattern {
+    public static final String IS_ALPHANUMERIC = "^\\w+$";
 }

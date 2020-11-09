@@ -2,8 +2,8 @@ package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.AggregatePublisher;
-import com.aixoft.escassandra.exception.AggregateNotFoundException;
-import com.aixoft.escassandra.exception.AggregateFailedSaveException;
+import com.aixoft.escassandra.exception.checked.AggregateNotFoundException;
+import com.aixoft.escassandra.exception.checked.AggregateFailedSaveException;
 import com.aixoft.escassandra.repository.ReactiveEventDescriptorRepository;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.service.ReactiveAggregateStore;

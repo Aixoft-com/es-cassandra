@@ -1,4 +1,4 @@
-package com.aixoft.escassandra.exception;
+package com.aixoft.escassandra.exception.checked;
 
-public class AggregateNotFoundException extends Throwable {
+public class AggregateNotFoundException extends Exception {
 }

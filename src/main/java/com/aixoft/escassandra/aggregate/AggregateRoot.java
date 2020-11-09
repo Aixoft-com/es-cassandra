@@ -55,7 +55,7 @@ public abstract class AggregateRoot {
         try {
             aggregateRoot = aggregateClass.getDeclaredConstructor(UUID.class).newInstance(aggregateId);
         } catch (ReflectiveOperationException ex) {
-            throw new AggregateCreationException(String.format("Not able to create instance of '%s'", aggregateClass.getName()), ex);
+            throw new AggregateCreationException(String.format("Not able to create instance of '%s'.", aggregateClass.getName()), ex);
         }
         return aggregateRoot;
     }

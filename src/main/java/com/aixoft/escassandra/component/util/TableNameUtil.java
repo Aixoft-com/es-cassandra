@@ -17,12 +17,12 @@ public final class TableNameUtil {
         if (annotation != null) {
             tableName = annotation.tableName();
         } else {
-            throw new AggregateAnnotationMissingException(String.format("%s not annotated with %s", aggregateClass.getName(), Aggregate.class.getName()));
+            throw new AggregateAnnotationMissingException(String.format("%s not annotated with %s.", aggregateClass.getName(), Aggregate.class.getName()));
         }
 
         if(!tableName.matches(RegexPattern.IS_ALPHANUMERIC)) {
             throw new AggregateAnnotationInvalidFormatException(
-                String.format("%s: tableName can only contain alphanumerical characters including '_'", aggregateClass.getName()));
+                String.format("%s: tableName can only contain alphanumerical characters including '_'.", aggregateClass.getName()));
         }
 
         return tableName;

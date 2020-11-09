@@ -15,6 +15,7 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.core.annotation.AnnotationConfigurationException;
 import org.springframework.core.type.AnnotationMetadata;
 
 import java.util.List;
@@ -26,8 +27,12 @@ public class CassandraEventSourcingBeansRegistrar implements ImportBeanDefinitio
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(EnableCassandraEventSourcing.class.getName(), false);
 
+        if(attributes == null) {
+            throw new AnnotationConfigurationException(String.format("Not able to get attributes from %s.", EnableCassandraEventSourcing.class.getName()));
+        }
+
         String[] aggregatePackages = (String[]) attributes.get("aggregatePackages");
-        List<Class> aggregateClasses = ClassTypeFilter.filterAllAggregateClasses(aggregatePackages, AggregateRoot.class);
+        List<Class<? extends AggregateRoot>> aggregateClasses = ClassTypeFilter.filterAllAggregateClasses(aggregatePackages, AggregateRoot.class);
 
         BeanDefinitionReaderUtils.registerWithGeneratedName(
             BeanDefinitionBuilder.genericBeanDefinition(AggregateComponent.class)

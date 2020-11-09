@@ -2,8 +2,8 @@ package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
 import com.aixoft.escassandra.config.TestEsCassandraConfiguration;
-import com.aixoft.escassandra.exception.AggregateFailedSaveException;
-import com.aixoft.escassandra.exception.AggregateNotFoundException;
+import com.aixoft.escassandra.exception.checked.AggregateFailedSaveException;
+import com.aixoft.escassandra.exception.checked.AggregateNotFoundException;
 import com.aixoft.escassandra.service.impl.model.AggregateMock;
 import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.repository.impl.ReactiveCassandraEventDescriptorRepository;
@@ -80,7 +80,7 @@ class ReactiveCassandraAggregateStoreIT {
 
     @Test
     void loadById_TwoActionsPublishedOnAggregate_AggregateRestoredFromAllEvents() {
-        UUID uuid = UUID.fromString("62853cd0-1888-11eb-be70-e792c04e0003");
+        UUID uuid = UUID.fromString("62853cd0-1888-11eb-be70-e792c0444444");
         String userName = "user";
         int points = 100;
 
