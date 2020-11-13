@@ -1,15 +1,15 @@
 package com.aixoft.escassandra.aggregate;
 
+import com.aixoft.escassandra.exception.runtime.AggregateCreationException;
 import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.model.EventVersion;
-import com.aixoft.escassandra.service.EventHandler;
 import lombok.NonNull;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class AggregateRoot implements EventHandler {
+public abstract class AggregateRoot {
     private EventVersion committedVersion;
     private final UUID id;
     private final List<Event> changes = new LinkedList<>();
@@ -48,5 +48,15 @@ public abstract class AggregateRoot implements EventHandler {
             "committedVersion=" + committedVersion +
             ", id=" + id +
             '}';
+    }
+
+    public static <T extends AggregateRoot> T create(UUID aggregateId, Class<T> aggregateClass) {
+        T aggregateRoot;
+        try {
+            aggregateRoot = aggregateClass.getDeclaredConstructor(UUID.class).newInstance(aggregateId);
+        } catch (ReflectiveOperationException ex) {
+            throw new AggregateCreationException(String.format("Not able to create instance of '%s'.", aggregateClass.getName()), ex);
+        }
+        return aggregateRoot;
     }
 }

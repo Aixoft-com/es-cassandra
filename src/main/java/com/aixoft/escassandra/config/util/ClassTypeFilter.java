@@ -18,29 +18,29 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
 public final class ClassTypeFilter {
-    public static List<Class> filterAllAggregateClasses(@NonNull String[] basePackages, @NonNull Class assignableClass) {
+    public static List<Class<? extends AggregateRoot>> filterAllAggregateClasses(@NonNull String[] basePackages, @NonNull Class<? extends AggregateRoot> assignableClass) {
 
         final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(
             true);
         provider.addIncludeFilter(new AssignableTypeFilter(AggregateRoot.class));
 
-        List<Class> filteredClasses = new ArrayList<>();
+        List<Class<? extends AggregateRoot>> filteredClasses = new ArrayList<>();
 
-        Arrays.stream(basePackages).forEach(basePackage -> {
-            filteredClasses.addAll(provider.findCandidateComponents(basePackage).stream()
+        Arrays.stream(basePackages).forEach(basePackage -> filteredClasses
+            .addAll(provider.findCandidateComponents(basePackage).stream()
                 .map(ClassTypeFilter::getClassByBeanDefinition)
                 .filter(assignableClass::isAssignableFrom)
                 .collect(Collectors.toList())
-            );
-        });
+            )
+        );
 
         return filteredClasses;
     }
 
 
-    private static Class<?> getClassByBeanDefinition(BeanDefinition beanDefinition) {
+    private static Class<? extends AggregateRoot> getClassByBeanDefinition(BeanDefinition beanDefinition) {
         try {
-            return Class.forName(beanDefinition.getBeanClassName());
+            return (Class<? extends AggregateRoot>) Class.forName(beanDefinition.getBeanClassName());
         } catch (ClassNotFoundException ex) {
             log.error(ex.getMessage(), ex);
             throw new ClassNotFoundByBeanDefinitionException(String.format("Not able to find class by name %s", beanDefinition.getBeanClassName()));

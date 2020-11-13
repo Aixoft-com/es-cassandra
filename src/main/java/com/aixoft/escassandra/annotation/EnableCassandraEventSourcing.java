@@ -12,6 +12,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Autoconfigure EsCassandra application.
+ * Specifies packages scanned for aggregates and events.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Import({
@@ -23,6 +27,5 @@ import java.lang.annotation.Target;
 @Configuration
 public @interface EnableCassandraEventSourcing {
     String[] aggregatePackages() default {};
-
     String[] eventPackages() default {};
 }

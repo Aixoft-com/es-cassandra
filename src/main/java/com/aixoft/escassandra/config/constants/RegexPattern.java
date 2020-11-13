@@ -1,6 +1,9 @@
 package com.aixoft.escassandra.config.constants;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-public interface RegexPattern {
-    String IS_ALPHANUMERIC = "^\\w+$";
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class RegexPattern {
+    public static final String IS_ALPHANUMERIC = "^\\w+$";
 }

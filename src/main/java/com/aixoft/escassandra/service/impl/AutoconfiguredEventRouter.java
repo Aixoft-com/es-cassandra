@@ -1,11 +1,11 @@
 package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
-import com.aixoft.escassandra.annotation.Subscribe;
+import com.aixoft.escassandra.annotation.SubscribeAll;
 import com.aixoft.escassandra.exception.runtime.EventHandlerInvocationFailedException;
 import com.aixoft.escassandra.exception.runtime.InvalidEventHandlerDefinitionException;
 import com.aixoft.escassandra.model.Event;
-import com.aixoft.escassandra.service.EventHandler;
+import com.aixoft.escassandra.service.EventListener;
 import com.aixoft.escassandra.service.EventRouter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -17,14 +17,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * EventRouter is used to register listener ({@link EventListener}) and handle events when published.
+ */
 @Slf4j
 public class AutoconfiguredEventRouter implements EventRouter {
-    private final Map<Class<?>, Map<EventHandler, Method>> eventHandlerMethodByEventClass = new HashMap<>();
+    private final Map<Class<?>, Map<EventListener, Method>> eventHandlerMethodByEventClass = new HashMap<>();
 
+    /**
+     * Register methods annotated with {@link SubscribeAll} and defined in given {@link EventListener} instance.
+     */
     @Override
-    public void registerEventHandler(@NonNull EventHandler eventHandler) {
-        List<Method> methods = Arrays.stream(eventHandler.getClass().getDeclaredMethods())
-            .filter(method -> method.isAnnotationPresent(Subscribe.class))
+    public void registerEventHandler(@NonNull EventListener eventListener) {
+        List<Method> methods = Arrays.stream(eventListener.getClass().getDeclaredMethods())
+            .filter(method -> method.isAnnotationPresent(SubscribeAll.class))
             .collect(Collectors.toList());
 
         for (Method method : methods) {
@@ -32,8 +38,8 @@ public class AutoconfiguredEventRouter implements EventRouter {
                 throw new InvalidEventHandlerDefinitionException(
                     String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but exactly two are allowed",
                         method.getName(),
-                        eventHandler.getClass().getName(),
-                        Subscribe.class.getName(),
+                        eventListener.getClass().getName(),
+                        SubscribeAll.class.getName(),
                         method.getParameterCount())
                 );
             }
@@ -43,8 +49,8 @@ public class AutoconfiguredEventRouter implements EventRouter {
                 throw new InvalidEventHandlerDefinitionException(
                     String.format("Method '%s' in class '%s' annotated with '%s' has 2nd parameter which in not subtype of '%s'",
                         method.getName(),
-                        eventHandler.getClass().getName(),
-                        Subscribe.class.getName(),
+                        eventListener.getClass().getName(),
+                        SubscribeAll.class.getName(),
                         AggregateRoot.class.getName())
                 );
             }
@@ -54,35 +60,39 @@ public class AutoconfiguredEventRouter implements EventRouter {
                 throw new InvalidEventHandlerDefinitionException(
                     String.format("Method '%s' in class '%s' annotated with '%s' has 1st parameter which in not subtype of '%s'",
                         method.getName(),
-                        eventHandler.getClass().getName(),
-                        Subscribe.class.getName(),
+                        eventListener.getClass().getName(),
+                        SubscribeAll.class.getName(),
                         Event.class.getName())
                 );
             }
 
-            method.setAccessible(true);
-
-            Map<EventHandler, Method> eventHandlerMethod = eventHandlerMethodByEventClass.get(eventParameterType);
+            Map<EventListener, Method> eventHandlerMethod = eventHandlerMethodByEventClass.get(eventParameterType);
             if (eventHandlerMethod == null) {
-                Map<EventHandler, Method> newEventHandlerMethod = new HashMap<>();
-                newEventHandlerMethod.put(eventHandler, method);
+                Map<EventListener, Method> newEventHandlerMethod = new HashMap<>();
+                newEventHandlerMethod.put(eventListener, method);
 
                 eventHandlerMethodByEventClass.put(eventParameterType, newEventHandlerMethod);
-            } else if (!eventHandlerMethod.containsKey(eventHandler)) {
-                eventHandlerMethod.put(eventHandler, method);
+            } else if (!eventHandlerMethod.containsKey(eventListener)) {
+                eventHandlerMethod.put(eventListener, method);
             } else {
                 throw new InvalidEventHandlerDefinitionException(
                     String.format("More then one event handler defined for same event '%s' in class '%s'",
                         eventParameterType.getName(),
-                        eventHandler.getClass().getName())
+                        eventListener.getClass().getName())
                 );
             }
         }
     }
 
+    /**
+     * Invokes methods for given event type on registered listeners.
+     *
+     * @param event - Event to be published.
+     * @param publisher Aggregate on which event occurred.
+     */
     @Override
     public void publish(@NonNull Event event, @NonNull AggregateRoot publisher) {
-        Map<EventHandler, Method> methodByEventHandler = eventHandlerMethodByEventClass.get(event.getClass());
+        Map<EventListener, Method> methodByEventHandler = eventHandlerMethodByEventClass.get(event.getClass());
 
         if (methodByEventHandler != null) {
             methodByEventHandler.forEach((eventHandler, method) -> {
@@ -90,7 +100,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
                     method.invoke(eventHandler, event, publisher);
                 } catch (ReflectiveOperationException ex) {
                     log.error(ex.getMessage(), ex);
-                    new EventHandlerInvocationFailedException(
+                    throw new EventHandlerInvocationFailedException(
                         String.format("Method '%s' in '%s' failed on invoke",
                             method.getName(),
                             eventHandler)
