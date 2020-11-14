@@ -134,3 +134,7 @@ More info on:
 
     https://docs.datastax.com/en/developer/java-driver/4.9/manual/core/configuration/
     https://docs.datastax.com/en/developer/java-driver/4.9/manual/core/configuration/reference/
+
+## License
+es-cassandra is Open Source software released under the Apache 2.0 license:
+https://www.apache.org/licenses/LICENSE-2.0.html.
