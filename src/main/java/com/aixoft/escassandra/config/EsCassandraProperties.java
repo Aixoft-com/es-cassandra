@@ -14,6 +14,13 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 import java.util.List;
 
+/**
+ * Information for cassandra configuration.
+ * <p>
+ * Datastax Driver Configuration also can be used to customize cassandra configuration.
+ *
+ * @see <a href="https://docs.datastax.com/en/developer/java-driver/4.9/manual/core/configuration/">DataStax Driver Configuration</a> {@link EsCassandraProperties} properties will always take precedence over Datastax Driver Configuration.
+ */
 @Validated
 @ConfigurationProperties(prefix = "escassandra")
 @FieldDefaults(level = AccessLevel.PRIVATE)

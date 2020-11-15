@@ -8,8 +8,19 @@ import com.aixoft.escassandra.exception.runtime.AggregateAnnotationMissingExcept
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * The type Table name util.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TableNameUtil {
+    /**
+     * Gets tableName from aggregate class using reflection.
+     * See {@link Aggregate#tableName()}.
+     *
+     * @param aggregateClass Aggregate class.
+     *
+     * @return Cassandra table name for the aggregate.
+     */
     public static String fromAggregateClass(Class<? extends AggregateRoot> aggregateClass) {
         Aggregate annotation = aggregateClass.getAnnotation(Aggregate.class);
 

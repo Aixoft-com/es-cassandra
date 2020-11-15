@@ -11,11 +11,21 @@ import org.springframework.core.convert.converter.Converter;
 
 import java.io.IOException;
 
+/**
+ * Converts event to JSON String.
+ */
 @AllArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class EventWritingConverter implements Converter<Event, String> {
     ObjectMapper objectMapper;
 
+    /**
+     * Serializes event with event name ({@link EventWrapper}) to JSON.
+     *
+     * @param event Event to be serialized.
+     *
+     * @return JSON string with serialized event.
+     */
     @SneakyThrows(value = IOException.class)
     @Override
     public String convert(Event event) {

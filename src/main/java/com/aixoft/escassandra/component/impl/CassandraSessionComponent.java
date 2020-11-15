@@ -21,6 +21,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Configures cassandra CqlSession according to properties {@link EsCassandraProperties}.
+ * Creates session attached to given keyspace.
+ * <p>
+ * If SchemaAction is different then 'NONE' then temporary session is created to initialize schema.
+ */
 @Slf4j
 public class CassandraSessionComponent implements CassandraSession, InitializingBean {
 
@@ -28,11 +34,20 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
     private final AggregateComponent aggregateComponent;
     private CqlSession session;
 
+    /**
+     * Instantiates a new Cassandra session component.
+     *
+     * @param esCassandraProperties Cassandra properties.
+     * @param aggregateComponent    Aggregate component with aggregate classes.
+     */
     public CassandraSessionComponent(@NonNull EsCassandraProperties esCassandraProperties, @NonNull AggregateComponent aggregateComponent) {
         this.esCassandraProperties = esCassandraProperties;
         this.aggregateComponent = aggregateComponent;
     }
 
+    /**
+     * @return Cassandra session.
+     */
     @Override
     public CqlSession getSession() {
         return session;

@@ -4,7 +4,7 @@ import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
 import com.aixoft.escassandra.component.registrar.AggregateComponent;
 import com.aixoft.escassandra.component.registrar.DomainEventsComponent;
-import com.aixoft.escassandra.config.util.ClassTypeFilter;
+import com.aixoft.escassandra.config.util.AggregateTypeFilter;
 import com.aixoft.escassandra.repository.converter.EventReadingConverter;
 import com.aixoft.escassandra.repository.converter.EventWritingConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,8 +21,17 @@ import org.springframework.core.type.AnnotationMetadata;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Registers beans and performs autoconfiguration based on {@link EnableCassandraEventSourcing} annotation.
+ */
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CassandraEventSourcingBeansRegistrar implements ImportBeanDefinitionRegistrar {
+
+    /**
+     * Registers converters beans and performs autoconfiguration of
+     * {@link DomainEventsComponent} and {@link AggregateComponent}
+     * based on {@link EnableCassandraEventSourcing} annotation.
+     */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(EnableCassandraEventSourcing.class.getName(), false);
@@ -32,7 +41,7 @@ public class CassandraEventSourcingBeansRegistrar implements ImportBeanDefinitio
         }
 
         String[] aggregatePackages = (String[]) attributes.get("aggregatePackages");
-        List<Class<? extends AggregateRoot>> aggregateClasses = ClassTypeFilter.filterAllAggregateClasses(aggregatePackages, AggregateRoot.class);
+        List<Class<? extends AggregateRoot>> aggregateClasses = AggregateTypeFilter.filterAllAggregateClasses(aggregatePackages, AggregateRoot.class);
 
         BeanDefinitionReaderUtils.registerWithGeneratedName(
             BeanDefinitionBuilder.genericBeanDefinition(AggregateComponent.class)

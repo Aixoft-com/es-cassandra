@@ -5,6 +5,9 @@ import com.aixoft.escassandra.service.impl.ReactiveCassandraAggregateStore;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+/**
+ * Accumulates reactive configuration.
+ */
 @Configuration
 @Import({
     ReactiveCassandraEventDescriptorRepository.class,

@@ -26,6 +26,19 @@ import java.lang.annotation.Target;
 })
 @Configuration
 public @interface EnableCassandraEventSourcing {
+    /**
+     * List of packages scanned for classes which extend {@link com.aixoft.escassandra.aggregate.AggregateRoot}
+     * and annotated with {@link com.aixoft.escassandra.annotation.Aggregate}.
+     *
+     * @return Aggregate packages to be scanned.
+     */
     String[] aggregatePackages() default {};
+
+    /**
+     * List of packages scanned for classes which implement {@link com.aixoft.escassandra.model.Event}
+     * and annotated with {@link com.aixoft.escassandra.annotation.DomainEvent}.
+     *
+     * @return Event packages to be scanned.
+     */
     String[] eventPackages() default {};
 }

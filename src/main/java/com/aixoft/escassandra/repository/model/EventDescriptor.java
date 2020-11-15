@@ -8,11 +8,25 @@ import lombok.Value;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Pair of {@link Event} and {@link EventVersion}.
+ */
 @Value
 public class EventDescriptor {
     EventVersion eventVersion;
     Event event;
 
+    /**
+     * Converts {@link Event} list to event descriptors.
+     * Version is generated for each event descriptor based on {@link EventVersion#getNext(boolean)} starting from
+     * version indicated by {@code startVersion}.
+     * <p>
+     * If {@code startVersion} is 'null' then {@link EventVersion#initial()} will be used as start Version.
+     *
+     * @param events       List of events to be converted.
+     * @param startVersion Starting event version. First event descriptor will have next value. Nullable.
+     * @return List of event descriptors.
+     */
     public static List<EventDescriptor> fromEvents(List<Event> events, EventVersion startVersion) {
         List<EventDescriptor> eventDescriptors = new ArrayList<>(events.size());
 

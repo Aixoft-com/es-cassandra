@@ -18,26 +18,58 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Cassandra repository to store {@link EventDescriptor}.
+ */
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CassandraEventDescriptorRepository implements EventDescriptorRepository {
     CqlSession session;
     StatementBinder statementBinder;
     EventReadingConverter eventReadingConverter;
 
+    /**
+     * Instantiates a new Cassandra event descriptor repository.
+     *
+     * @param cassandraSession      Cassandra session.
+     * @param statementBinder       Statement binder.
+     * @param eventReadingConverter Event reading converter.
+     */
     public CassandraEventDescriptorRepository(CassandraSession cassandraSession, StatementBinder statementBinder, EventReadingConverter eventReadingConverter) {
         this.session = cassandraSession.getSession();
         this.statementBinder = statementBinder;
         this.eventReadingConverter = eventReadingConverter;
     }
 
+    /**
+     * Executes insert of {@link EventDescriptor} list to database.
+     * <p>
+     * If list contains more then one element, then insert will be performed in a batch.
+     * <p>
+     * If any event with same version is is already persisted in the database then operation will fail and no element
+     * will be stored.
+     *
+     * @param aggregateClass    Aggregate class.
+     * @param aggregateId       UUID of aggregate for which EventDescriptors will be inserted.
+     *
+     * @param eventDescriptors  EventDescriptors to be inserted.
+     * @return true if insert was successful or false otherwise.
+     */
     @Override
     public boolean insertAll(@NonNull Class<? extends AggregateRoot> aggregateClass,
                           @NonNull UUID aggregateId,
-                          @NonNull List<EventDescriptor> newEventDescriptors) {
-        return session.execute(statementBinder.bindInsertEventDescriptors(aggregateClass, aggregateId, newEventDescriptors))
+                          @NonNull List<EventDescriptor> eventDescriptors) {
+        return session.execute(statementBinder.bindInsertEventDescriptors(aggregateClass, aggregateId, eventDescriptors))
             .wasApplied();
     }
 
+    /**
+     * Find all event descriptors for aggregate of given type and id.
+     *
+     * @param aggregateClass    Aggregate class.
+     * @param aggregateId       UUID of aggregate.
+     *
+     * @return List of event descriptors.
+     */
     @Override
     public List<EventDescriptor> findAllByAggregateId(@NonNull Class<? extends AggregateRoot> aggregateClass,
                                                       @NonNull UUID aggregateId) {
@@ -46,6 +78,15 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
         );
     }
 
+    /**
+     * Find all event descriptors since given major version ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
+     * for aggregate of given type and id.
+     *
+     * @param aggregateClass    Aggregate class.
+     * @param aggregateId       UUID of aggregate.
+     *
+     * @return List of event descriptors.
+     */
     @Override
     public List<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
                                                                    @NonNull UUID aggregateId,
