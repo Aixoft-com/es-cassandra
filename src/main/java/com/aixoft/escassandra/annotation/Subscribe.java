@@ -1,14 +1,17 @@
 package com.aixoft.escassandra.annotation;
 
+import com.aixoft.escassandra.aggregate.AggregateRoot;
+
 import java.lang.annotation.*;
 
 /**
- * Annotation indicates that method shall be trigger when event with given type was published.
+ * Annotation indicates that method shall be triggered when event with given type was committed:
+ * ({@link com.aixoft.escassandra.service.AggregateStore#save(AggregateRoot)}
+ * or {@link com.aixoft.escassandra.service.ReactiveAggregateStore#save(AggregateRoot)}).
+ * <p>
  * Shall be used on methods in class which extends {@link com.aixoft.escassandra.aggregate.AggregateRoot}.
- *
- * Method shall have exactly one parameter with type which implements {@link com.aixoft.escassandra.model.Event}.
- *
- * Annotation cannot be used on more then one method with same event type in single EventHandler.
+ * <p>
+ * Method shall be public have exactly one parameter with type which implements {@link com.aixoft.escassandra.model.Event}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

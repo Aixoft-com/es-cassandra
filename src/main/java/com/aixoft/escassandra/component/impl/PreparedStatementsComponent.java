@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Creates prepared statements for each aggregate type to optimize performance of cassandra queries.
+ */
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PreparedStatementsComponent implements PreparedStatements {
     private static final String INSERT_STATEMENT_FORMAT = "INSERT INTO %s (aggregateId, majorVersion, minorVersion, event) VALUES (?, ?, ?, ?) IF NOT EXISTS";
@@ -26,22 +29,48 @@ public class PreparedStatementsComponent implements PreparedStatements {
     Map<Class<? extends AggregateRoot>, PreparedStatement> selectAllStatementsByAggregateClass = new HashMap<>();
     Map<Class<? extends AggregateRoot>, PreparedStatement> selectAllSinceSnapshotStatementsByAggregateClass = new HashMap<>();
 
+    /**
+     * Instantiates a new Prepared statements component.
+     *
+     * @param aggregateComponent the aggregate component
+     * @param cassandraSession   the cassandra session
+     */
     public PreparedStatementsComponent(@NonNull AggregateComponent aggregateComponent, @NonNull CassandraSession cassandraSession) {
         if (aggregateComponent.getClasses() != null) {
             initPreparedStatements(aggregateComponent.getClasses(), cassandraSession.getSession());
         }
     }
 
+
+    /**
+     * Gets insert prepared statement.
+     *
+     * @return Statement to insert events for given aggregate type.
+     */
     @Override
     public PreparedStatement getInsertPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
         return insertStatementsByAggregateClass.get(aggregateClass);
     }
 
+    /**
+     * Gets select all prepared statement.
+     *
+     * @param aggregateClass Aggregate class.
+     *
+     * @return Statement to select all events for given aggregate type.
+     */
     @Override
     public PreparedStatement getSelectAllPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
         return selectAllStatementsByAggregateClass.get(aggregateClass);
     }
 
+    /**
+     * Gets select all since snapshot prepared statement.
+     *
+     * @param aggregateClass Aggregate class.
+     *
+     * @return Statement to select all events with major version greater then provided for given aggregate type.
+     */
     @Override
     public PreparedStatement getSelectAllSinceSnapshotPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
         return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateClass);

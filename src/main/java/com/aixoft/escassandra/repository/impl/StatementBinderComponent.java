@@ -16,12 +16,26 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Binds prepared statements with parameters
+ */
 @AllArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class StatementBinderComponent implements StatementBinder {
     PreparedStatements preparedStatements;
     EventWritingConverter eventWritingConverter;
 
+    /**
+     * Bind insert statement with aggregate and event descriptors.
+     * <p>
+     * If number of events is greater then one then batch statement will be created.
+     *
+     * @param aggregateClass    Aggregate class.
+     * @param aggregateId       UUID of aggregate for which EventDescriptors will be inserted.
+     * @param eventDescriptors  EventDescriptors to be inserted.
+     *
+     * @return Bound statement.
+     */
     @Override
     public Statement bindInsertEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, @NonNull List<EventDescriptor> eventDescriptors) {
         PreparedStatement preparedStatement = preparedStatements.getInsertPreparedStatement(aggregateClass);
@@ -53,6 +67,14 @@ public class StatementBinderComponent implements StatementBinder {
             eventWritingConverter.convert(eventDescriptor.getEvent()));
     }
 
+    /**
+     * Bind statement to select all events for given aggregate.
+     *
+     * @param aggregateClass    Aggregate class.
+     * @param aggregateId       UUID of aggregate.
+     *
+     * @return Bound statement.
+     */
     @Override
     public BoundStatement  bindFindAllEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId) {
         PreparedStatement preparedStatement = preparedStatements.getSelectAllPreparedStatement(aggregateClass);
@@ -60,6 +82,15 @@ public class StatementBinderComponent implements StatementBinder {
         return preparedStatement.bind(aggregateId);
     }
 
+    /**
+     * Bind statement to select all events with major version greater then provided for given aggregate type.
+     *
+     * @param aggregateClass    Aggregate class.
+     * @param aggregateId       UUID of aggregate.
+     * @param snapshotVersion   Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
+     *
+     * @return Bound statement.
+     */
     @Override
     public BoundStatement bindFindAllSinceLastSnapshotEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, int snapshotVersion) {
         PreparedStatement preparedStatement = preparedStatements.getSelectAllSinceSnapshotPreparedStatement(aggregateClass);

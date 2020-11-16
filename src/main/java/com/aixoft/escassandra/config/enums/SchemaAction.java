@@ -6,7 +6,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
- * Enum which identify schema action to be performed at startup
+ * Enum which identify schema action to be performed at startup.
  */
 public enum SchemaAction {
     /**
@@ -94,7 +94,23 @@ public enum SchemaAction {
         }
     };
 
+    /**
+     * Gets keyspace modifier.
+     *
+     * @param keyspace          Keyspace name.
+     * @param replicationFactor Replication factor.
+     *
+     * @return Keyspace modifier.
+     */
     public abstract Consumer<CqlSession> getKeyspaceModifier(String keyspace, int replicationFactor);
+
+    /**
+     * Gets table modifier.
+     *
+     * @param keyspace Keyspace name.
+     *
+     * @return Table modifier.
+     */
     public abstract BiConsumer<CqlSession, String> getTableModifier(String keyspace);
 
     private static final String CREATE_KEYSPACE_IF_NOT_EXISTS_FORMAT = "CREATE KEYSPACE IF NOT EXISTS %s WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : %d};";

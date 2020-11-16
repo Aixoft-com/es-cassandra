@@ -15,9 +15,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Reflection based aggregate filter.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
-public final class ClassTypeFilter {
+public final class AggregateTypeFilter {
+    /**
+     * Scan base packages and filter all aggregate classes which can be assigned from given class.
+     *
+     * @param basePackages    Aggregate base packages.
+     * @param assignableClass Class from which filtered class can be assigned.
+     *
+     * @return Filtered aggregate classes.
+     */
     public static List<Class<? extends AggregateRoot>> filterAllAggregateClasses(@NonNull String[] basePackages, @NonNull Class<? extends AggregateRoot> assignableClass) {
 
         final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(
@@ -28,7 +39,7 @@ public final class ClassTypeFilter {
 
         Arrays.stream(basePackages).forEach(basePackage -> filteredClasses
             .addAll(provider.findCandidateComponents(basePackage).stream()
-                .map(ClassTypeFilter::getClassByBeanDefinition)
+                .map(AggregateTypeFilter::getClassByBeanDefinition)
                 .filter(assignableClass::isAssignableFrom)
                 .collect(Collectors.toList())
             )

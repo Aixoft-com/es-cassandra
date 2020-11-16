@@ -5,6 +5,9 @@ import com.aixoft.escassandra.service.impl.CassandraAggregateStore;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+/**
+ * Accumulates imperative configuration.
+ */
 @Configuration
 @Import({
     CassandraEventDescriptorRepository.class,

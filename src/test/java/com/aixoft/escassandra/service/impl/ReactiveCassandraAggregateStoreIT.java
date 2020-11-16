@@ -55,7 +55,7 @@ class ReactiveCassandraAggregateStoreIT {
         //Assert apply methods not executed on event publish before save. Events stored in uncommitted changes.
         assertNull(aggregateMock.getUserName());
         assertEquals(0, aggregateMock.getPoints());
-        assertEquals(2, aggregateMock.getUncommittedChanges().size());
+        assertEquals(2, aggregateMock.getUncommittedEvents().size());
 
         StepVerifier.create(reactiveCassandraAggregateStore.save(aggregateMock))
             .expectNextCount(1)
@@ -64,7 +64,7 @@ class ReactiveCassandraAggregateStoreIT {
         //Assert apply methods executed on save resulting in aggregate update. No uncommitted changes after save.
         assertEquals(userName, aggregateMock.getUserName());
         assertEquals(points, aggregateMock.getPoints());
-        assertEquals(0, aggregateMock.getUncommittedChanges().size());
+        assertEquals(0, aggregateMock.getUncommittedEvents().size());
     }
 
     @Test
@@ -97,7 +97,7 @@ class ReactiveCassandraAggregateStoreIT {
                 assertEquals(new EventVersion(0, 2), restoredAggregate.getCommittedVersion());
                 assertEquals(userName, restoredAggregate.getUserName());
                 assertEquals(points, restoredAggregate.getPoints());
-                assertEquals(0, aggregateMock.getUncommittedChanges().size());
+                assertEquals(0, aggregateMock.getUncommittedEvents().size());
             })
             .verifyComplete();
 
@@ -124,7 +124,7 @@ class ReactiveCassandraAggregateStoreIT {
                 assertEquals(new EventVersion(1, 1), restoredAggregate.getCommittedVersion());
                 assertEquals("user2", restoredAggregate.getUserName());
                 assertEquals(250, restoredAggregate.getPoints());
-                assertEquals(0, restoredAggregate.getUncommittedChanges().size());
+                assertEquals(0, restoredAggregate.getUncommittedEvents().size());
             })
             .verifyComplete();
 

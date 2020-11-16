@@ -3,7 +3,7 @@ package com.aixoft.escassandra.service.impl;
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.annotation.SubscribeAll;
 import com.aixoft.escassandra.exception.runtime.EventHandlerInvocationFailedException;
-import com.aixoft.escassandra.exception.runtime.InvalidEventHandlerDefinitionException;
+import com.aixoft.escassandra.exception.runtime.InvalidSubscribedMethodDefinitionException;
 import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.service.EventListener;
 import com.aixoft.escassandra.service.EventRouter;
@@ -26,6 +26,14 @@ public class AutoconfiguredEventRouter implements EventRouter {
 
     /**
      * Register methods annotated with {@link SubscribeAll} and defined in given {@link EventListener} instance.
+     * <p>
+     * If number of method parameters is different then two
+     * or first parameter is not subtype of {@link Event}
+     * or second parameter is not subtype of {@link AggregateRoot}
+     * or signature of subscribed method is duplicated
+     * then {@link InvalidSubscribedMethodDefinitionException} is thrown.
+     *
+     * @throws InvalidSubscribedMethodDefinitionException If definition of subscribed method is invalid.
      */
     @Override
     public void registerEventHandler(@NonNull EventListener eventListener) {
@@ -35,7 +43,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
 
         for (Method method : methods) {
             if (method.getParameterCount() != 2) {
-                throw new InvalidEventHandlerDefinitionException(
+                throw new InvalidSubscribedMethodDefinitionException(
                     String.format("Method '%s' in class '%s' annotated with '%s' has %d parameters but exactly two are allowed",
                         method.getName(),
                         eventListener.getClass().getName(),
@@ -46,7 +54,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
 
             Class<?> publisherParameterType = method.getParameterTypes()[1];
             if (!AggregateRoot.class.isAssignableFrom(publisherParameterType)) {
-                throw new InvalidEventHandlerDefinitionException(
+                throw new InvalidSubscribedMethodDefinitionException(
                     String.format("Method '%s' in class '%s' annotated with '%s' has 2nd parameter which in not subtype of '%s'",
                         method.getName(),
                         eventListener.getClass().getName(),
@@ -57,7 +65,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
 
             Class<?> eventParameterType = method.getParameterTypes()[0];
             if (!Event.class.isAssignableFrom(eventParameterType)) {
-                throw new InvalidEventHandlerDefinitionException(
+                throw new InvalidSubscribedMethodDefinitionException(
                     String.format("Method '%s' in class '%s' annotated with '%s' has 1st parameter which in not subtype of '%s'",
                         method.getName(),
                         eventListener.getClass().getName(),
@@ -75,7 +83,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
             } else if (!eventHandlerMethod.containsKey(eventListener)) {
                 eventHandlerMethod.put(eventListener, method);
             } else {
-                throw new InvalidEventHandlerDefinitionException(
+                throw new InvalidSubscribedMethodDefinitionException(
                     String.format("More then one event handler defined for same event '%s' in class '%s'",
                         eventParameterType.getName(),
                         eventListener.getClass().getName())
@@ -87,7 +95,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
     /**
      * Invokes methods for given event type on registered listeners.
      *
-     * @param event - Event to be published.
+     * @param event     Event to be published.
      * @param publisher Aggregate on which event occurred.
      */
     @Override

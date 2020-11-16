@@ -2,6 +2,7 @@ package com.aixoft.escassandra.config.util;
 
 import com.aixoft.escassandra.annotation.DomainEvent;
 import com.aixoft.escassandra.exception.runtime.ClassNotFoundByBeanDefinitionException;
+import com.aixoft.escassandra.exception.runtime.InvalidDomainEventDefinitionException;
 import com.aixoft.escassandra.model.Event;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -18,9 +19,22 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Scans for events using reflection.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
 public class EventClassByNameReflection {
+    /**
+     * Scans packages to find {@link Event} annotated with {@link DomainEvent} and creates maps of events by event name
+     * (See {@link DomainEvent#event()}).
+     *
+     * @param basePackages Packages to be scanned for events.
+     *
+     * @return Map of event classes by its name.
+     *
+     * @throws InvalidDomainEventDefinitionException If two event classes have the same event name or name is null or blank.
+     */
     public static final Map<String, Class<? extends Event>> find(@NonNull String[] basePackages) {
         Map<String, Class<? extends Event>> eventClassByName = new HashMap<>();
 
@@ -51,11 +65,11 @@ public class EventClassByNameReflection {
                 DomainEvent domainEvent = (DomainEvent) annotation;
 
                 if (domainEvent.event() == null || domainEvent.event().isBlank()) {
-                    throw new BeanInstantiationException(eventClass, String.format("Event is null or blank in %s.", eventClass.getName()));
+                    throw new InvalidDomainEventDefinitionException(String.format("Event is null or blank in %s.", eventClass.getName()));
                 }
 
                 if (domainEventMap.containsKey(domainEvent.event())) {
-                    throw new BeanInstantiationException(eventClass, String.format("Duplicated event '%s' in [%s, %s].",
+                    throw new InvalidDomainEventDefinitionException(String.format("Duplicated event '%s' in [%s, %s].",
                         domainEvent.event(),
                         eventClass.getName(),
                         domainEventMap.get(domainEvent.event()))
