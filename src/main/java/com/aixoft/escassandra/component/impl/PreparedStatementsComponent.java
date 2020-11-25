@@ -25,9 +25,9 @@ public class PreparedStatementsComponent implements PreparedStatements {
     private static final String SELECT_ALL_STATEMENT_FORMAT = "SELECT * FROM %s WHERE aggregateId = ?";
     private static final String SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT = "SELECT * FROM %s WHERE aggregateId = ? and majorVersion >= ?";
 
-    Map<Class<? extends AggregateRoot>, PreparedStatement> insertStatementsByAggregateClass = new HashMap<>();
-    Map<Class<? extends AggregateRoot>, PreparedStatement> selectAllStatementsByAggregateClass = new HashMap<>();
-    Map<Class<? extends AggregateRoot>, PreparedStatement> selectAllSinceSnapshotStatementsByAggregateClass = new HashMap<>();
+    Map<String, PreparedStatement> insertStatementsByAggregateClass = new HashMap<>();
+    Map<String, PreparedStatement> selectAllStatementsByAggregateClass = new HashMap<>();
+    Map<String, PreparedStatement> selectAllSinceSnapshotStatementsByAggregateClass = new HashMap<>();
 
     /**
      * Instantiates a new Prepared statements component.
@@ -49,19 +49,18 @@ public class PreparedStatementsComponent implements PreparedStatements {
      */
     @Override
     public PreparedStatement getInsertPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
-        return insertStatementsByAggregateClass.get(aggregateClass);
+        return insertStatementsByAggregateClass.get(aggregateClass.getName());
     }
 
     /**
      * Gets select all prepared statement.
      *
      * @param aggregateClass Aggregate class.
-     *
      * @return Statement to select all events for given aggregate type.
      */
     @Override
     public PreparedStatement getSelectAllPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
-        return selectAllStatementsByAggregateClass.get(aggregateClass);
+        return selectAllStatementsByAggregateClass.get(aggregateClass.getName());
     }
 
     /**
@@ -73,16 +72,16 @@ public class PreparedStatementsComponent implements PreparedStatements {
      */
     @Override
     public PreparedStatement getSelectAllSinceSnapshotPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
-        return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateClass);
+        return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateClass.getName());
     }
 
     private void initPreparedStatements(List<Class<? extends AggregateRoot>> aggregateClasses, @NonNull CqlSession session) {
         aggregateClasses.forEach(aggregateClass -> {
             String tableName = TableNameUtil.fromAggregateClass(aggregateClass);
 
-            insertStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(INSERT_STATEMENT_FORMAT, tableName))));
-            selectAllStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_STATEMENT_FORMAT, tableName))));
-            selectAllSinceSnapshotStatementsByAggregateClass.put(aggregateClass, session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT, tableName))));
+            insertStatementsByAggregateClass.put(aggregateClass.getName(), session.prepare(SimpleStatement.newInstance(String.format(INSERT_STATEMENT_FORMAT, tableName))));
+            selectAllStatementsByAggregateClass.put(aggregateClass.getName(), session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_STATEMENT_FORMAT, tableName))));
+            selectAllSinceSnapshotStatementsByAggregateClass.put(aggregateClass.getName(), session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_SINCE_MAJOR_VERSION_STATEMENT_FORMAT, tableName))));
         });
     }
 }
