@@ -2,8 +2,8 @@ package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.AggregateCommitter;
-import com.aixoft.escassandra.exception.checked.AggregateNotFoundException;
 import com.aixoft.escassandra.exception.checked.AggregateFailedSaveException;
+import com.aixoft.escassandra.exception.checked.AggregateNotFoundException;
 import com.aixoft.escassandra.repository.ReactiveEventDescriptorRepository;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.service.ReactiveAggregateStore;
@@ -31,7 +31,7 @@ public class ReactiveCassandraAggregateStore implements ReactiveAggregateStore {
      * Creates Mono for persisting all uncommitted events to the database.
      *
      * Events are applied on the aggregate (See {@link com.aixoft.escassandra.annotation.Subscribe}).
-     * Events are published to subscribed {@link com.aixoft.escassandra.service.EventListener} (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
+     * Events are published to subscribed {@link com.aixoft.escassandra.annotation.EventListener} (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
      *
      * List of uncommitted events will be cleared (See {@link AggregateRoot#getUncommittedEvents()}.
      *
@@ -71,7 +71,7 @@ public class ReactiveCassandraAggregateStore implements ReactiveAggregateStore {
     @Override
     public <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, Class<T> aggregateClass) {
 
-         return eventDescriptorRepository.findAllByAggregateId(aggregateClass, aggregateId)
+        return eventDescriptorRepository.findAllByAggregateId(aggregateClass, aggregateId)
             .switchIfEmpty(Mono.error(AggregateNotFoundException::new))
             .reduceWith(
                 () -> AggregateRoot.create(aggregateId, aggregateClass),

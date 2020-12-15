@@ -1,14 +1,17 @@
 package com.aixoft.escassandra.service.impl;
 
 import com.aixoft.escassandra.aggregate.AggregateRoot;
+import com.aixoft.escassandra.annotation.EventListener;
 import com.aixoft.escassandra.annotation.SubscribeAll;
 import com.aixoft.escassandra.exception.runtime.EventHandlerInvocationFailedException;
 import com.aixoft.escassandra.exception.runtime.InvalidSubscribedMethodDefinitionException;
 import com.aixoft.escassandra.model.Event;
-import com.aixoft.escassandra.service.EventListener;
 import com.aixoft.escassandra.service.EventRouter;
+import lombok.AccessLevel;
 import lombok.NonNull;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -21,8 +24,44 @@ import java.util.stream.Collectors;
  * EventRouter is used to register listener ({@link EventListener}) and handle events when published.
  */
 @Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AutoconfiguredEventRouter implements EventRouter {
-    private final Map<Class<?>, Map<EventListener, Method>> eventHandlerMethodByEventClass = new HashMap<>();
+    Map<Class<?>, Map<Object, Method>> eventHandlerMethodByEventClass = new HashMap<>();
+
+    /**
+     * Returns from App Context all ({@link EventListener}) and register them
+     *
+     * @param context ApplicationContext
+     */
+    public AutoconfiguredEventRouter(ApplicationContext context) {
+        context.getBeansWithAnnotation(EventListener.class).values().forEach(this::registerEventHandler);
+    }
+
+    /**
+     * Invokes methods for given event type on registered listeners.
+     *
+     * @param event     Event to be published.
+     * @param publisher Aggregate on which event occurred.
+     */
+    @Override
+    public void publish(@NonNull Event event, @NonNull AggregateRoot publisher) {
+        Map<Object, Method> methodByEventHandler = eventHandlerMethodByEventClass.get(event.getClass());
+
+        if (methodByEventHandler != null) {
+            methodByEventHandler.forEach((eventHandler, method) -> {
+                try {
+                    method.invoke(eventHandler, event, publisher);
+                } catch (ReflectiveOperationException ex) {
+                    log.error(ex.getMessage(), ex);
+                    throw new EventHandlerInvocationFailedException(
+                        String.format("Method '%s' in '%s' failed on invoke",
+                            method.getName(),
+                            eventHandler)
+                    );
+                }
+            });
+        }
+    }
 
     /**
      * Register methods annotated with {@link SubscribeAll} and defined in given {@link EventListener} instance.
@@ -35,8 +74,8 @@ public class AutoconfiguredEventRouter implements EventRouter {
      *
      * @throws InvalidSubscribedMethodDefinitionException If definition of subscribed method is invalid.
      */
-    @Override
-    public void registerEventHandler(@NonNull EventListener eventListener) {
+
+    private void registerEventHandler(@NonNull Object eventListener) {
         List<Method> methods = Arrays.stream(eventListener.getClass().getDeclaredMethods())
             .filter(method -> method.isAnnotationPresent(SubscribeAll.class))
             .collect(Collectors.toList());
@@ -74,9 +113,9 @@ public class AutoconfiguredEventRouter implements EventRouter {
                 );
             }
 
-            Map<EventListener, Method> eventHandlerMethod = eventHandlerMethodByEventClass.get(eventParameterType);
+            Map<Object, Method> eventHandlerMethod = eventHandlerMethodByEventClass.get(eventParameterType);
             if (eventHandlerMethod == null) {
-                Map<EventListener, Method> newEventHandlerMethod = new HashMap<>();
+                Map<Object, Method> newEventHandlerMethod = new HashMap<>();
                 newEventHandlerMethod.put(eventListener, method);
 
                 eventHandlerMethodByEventClass.put(eventParameterType, newEventHandlerMethod);
@@ -89,32 +128,6 @@ public class AutoconfiguredEventRouter implements EventRouter {
                         eventListener.getClass().getName())
                 );
             }
-        }
-    }
-
-    /**
-     * Invokes methods for given event type on registered listeners.
-     *
-     * @param event     Event to be published.
-     * @param publisher Aggregate on which event occurred.
-     */
-    @Override
-    public void publish(@NonNull Event event, @NonNull AggregateRoot publisher) {
-        Map<EventListener, Method> methodByEventHandler = eventHandlerMethodByEventClass.get(event.getClass());
-
-        if (methodByEventHandler != null) {
-            methodByEventHandler.forEach((eventHandler, method) -> {
-                try {
-                    method.invoke(eventHandler, event, publisher);
-                } catch (ReflectiveOperationException ex) {
-                    log.error(ex.getMessage(), ex);
-                    throw new EventHandlerInvocationFailedException(
-                        String.format("Method '%s' in '%s' failed on invoke",
-                            method.getName(),
-                            eventHandler)
-                    );
-                }
-            });
         }
     }
 }

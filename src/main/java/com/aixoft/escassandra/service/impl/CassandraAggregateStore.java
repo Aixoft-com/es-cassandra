@@ -28,7 +28,7 @@ public class CassandraAggregateStore implements AggregateStore {
      * Persists all uncommitted events to the database.
      *
      * Events are applied on the aggregate (See {@link com.aixoft.escassandra.annotation.Subscribe}).
-     * Events are published to subscribed {@link com.aixoft.escassandra.service.EventListener} (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
+     * Events are published to subscribed {@link com.aixoft.escassandra.annotation.EventListener} (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
      *
      * List of uncommitted events will be cleared (See {@link AggregateRoot#getUncommittedEvents()}.
      *
