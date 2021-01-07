@@ -1,17 +1,19 @@
 package com.aixoft.escassandra.repository.impl;
 
-import com.aixoft.escassandra.aggregate.AggregateRoot;
-import com.aixoft.escassandra.annotation.Aggregate;
+import com.aixoft.escassandra.annotation.AggregateData;
 import com.aixoft.escassandra.annotation.DomainEvent;
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
 import com.aixoft.escassandra.config.TestEsCassandraConfiguration;
+import com.aixoft.escassandra.model.AggregateUpdater;
 import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.model.SnapshotEvent;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 import lombok.Value;
+import lombok.With;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,17 +36,17 @@ class ReactiveCassandraEventDescriptorRepositoryIT {
     void insertTwoEventDescriptors_FindAllInsertedEdsByAggregateId() {
         UUID uuid = UUID.fromString("62853cd0-1888-11eb-be70-e792c04e2799");
 
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateMock.class, uuid,
-                List.of(
-                    new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")),
-                    new EventDescriptor(new EventVersion(0 ,2), new PointsAdded(100))
-                )))
-            .expectNext(true)
+        EventDescriptor ed1 = new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1"));
+        EventDescriptor ed2 = new EventDescriptor(new EventVersion(0 ,2), new PointsAdded(100));
+
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateDataMock.class, uuid, List.of(ed1, ed2)))
+            .expectNext(ed1)
+            .expectNext(ed2)
             .verifyComplete();
 
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateMock.class, uuid))
-            .expectNext(new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")))
-            .expectNext(new EventDescriptor(new EventVersion(0 ,2), new PointsAdded(100)))
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateDataMock.class, uuid))
+            .expectNext(ed1)
+            .expectNext(ed2)
             .verifyComplete();
     }
 
@@ -52,7 +54,7 @@ class ReactiveCassandraEventDescriptorRepositoryIT {
     void findAllByAggregateId_AggregateDoesNotExists_CompletesWithNoElements() {
         UUID uuid = UUID.fromString("8432ade0-15e5-11eb-9d4d-c7745ce10000");
 
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateMock.class, uuid))
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateDataMock.class, uuid))
             .verifyComplete();
     }
 
@@ -60,19 +62,16 @@ class ReactiveCassandraEventDescriptorRepositoryIT {
     void findAllByAggregateId_SnapshotInserted_ReturnsAllEventsFromBeginning() {
         UUID uuid = UUID.fromString("8432ade0-15e5-11eb-9d4d-c7745ce11bfb");
 
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateMock.class, uuid,
-            List.of(
-                new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")),
-                new EventDescriptor(new EventVersion(1, 0), new SnapshotCreated("aggregate1", 0)),
-                new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100))
-            )))
-            .expectNext(true)
+        EventDescriptor ed1 = new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1"));
+        EventDescriptor ed2 = new EventDescriptor(new EventVersion(1, 0), new SnapshotCreated("aggregate1", 0));
+        EventDescriptor ed3 = new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100));
+
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateDataMock.class, uuid, List.of(ed1, ed2, ed3)))
+            .expectNext(ed1, ed2, ed3)
             .verifyComplete();
 
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateMock.class, uuid))
-            .expectNext(new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")))
-            .expectNext(new EventDescriptor(new EventVersion(1 ,0), new SnapshotCreated("aggregate1", 0)))
-            .expectNext(new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100)))
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateDataMock.class, uuid))
+            .expectNext(ed1, ed2, ed3)
             .verifyComplete();
     }
 
@@ -81,20 +80,19 @@ class ReactiveCassandraEventDescriptorRepositoryIT {
         UUID uuid = UUID.fromString("f5ade710-1323-11eb-a4ac-6f68a8deff48");
 
         // Given
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateMock.class, uuid,
-            List.of(
-                new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")),
-                new EventDescriptor(new EventVersion(1, 0), new SnapshotCreated("aggregate1", 0)),
-                new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100))
-            )))
-            .expectNext(true)
+        EventDescriptor ed1 = new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1"));
+        EventDescriptor ed2 = new EventDescriptor(new EventVersion(1, 0), new SnapshotCreated("aggregate1", 0));
+        EventDescriptor ed3 = new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100));
+
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateDataMock.class, uuid, List.of(ed1, ed2, ed3)))
+            .expectNext(ed1, ed2, ed3)
             .verifyComplete();
 
         // When
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateIdSinceSnapshot(AggregateMock.class, uuid, 1))
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateIdSinceSnapshot(AggregateDataMock.class, uuid, 1))
         // Then
-            .expectNext(new EventDescriptor(new EventVersion(1 ,0), new SnapshotCreated("aggregate1", 0)))
-            .expectNext(new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100)))
+            .expectNext(ed2)
+            .expectNext(ed3)
             .verifyComplete();
     }
 
@@ -103,89 +101,110 @@ class ReactiveCassandraEventDescriptorRepositoryIT {
         UUID uuid = UUID.fromString("2ac7eaa0-1323-11eb-b5d3-87470e4aeb38");
 
         // Given
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateMock.class, uuid,
-            List.of(
-                new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")),
-                new EventDescriptor(new EventVersion(1, 0), new SnapshotCreated("aggregate1", 0)),
-                new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100))
-            )))
-            .expectNext(true)
+        EventDescriptor ed1 = new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1"));
+        EventDescriptor ed2 = new EventDescriptor(new EventVersion(1, 0), new SnapshotCreated("aggregate1", 0));
+        EventDescriptor ed3 = new EventDescriptor(new EventVersion(1 ,1), new PointsAdded(100));
+
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateDataMock.class, uuid, List.of(ed1, ed2, ed3)))
+            .expectNext(ed1, ed2, ed3)
             .verifyComplete();
 
         // When
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateIdSinceSnapshot(AggregateMock.class, uuid, 2))
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateIdSinceSnapshot(AggregateDataMock.class, uuid, 2))
         // Then
             .verifyComplete();
     }
 
     @Test
-    void insertEventDescriptorsWithConflictingVersion_ReturnsMonoFalseAndNoEventFromBatchIsInserted() {
+    void insertEventDescriptorsWithConflictingVersion_ReturnsFluxEmptyAndNoEventFromBatchIsInserted() {
         UUID uuid = UUID.fromString("639899f0-1559-11eb-972a-a77f7d00b735");
 
         // Given
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateMock.class, uuid,
-                List.of(
-                    new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")),
-                    new EventDescriptor(new EventVersion(0 ,2), new PointsAdded(100))
-                )))
-            .expectNext(true)
+        EventDescriptor ed1 = new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1"));
+        EventDescriptor ed2 = new EventDescriptor(new EventVersion(0 ,2), new PointsAdded(100));
+
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateDataMock.class, uuid, List.of(ed1, ed2)))
+            .expectNext(ed1, ed2)
             .verifyComplete();
 
         // When
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateMock.class, uuid,
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.insertAll(AggregateDataMock.class, uuid,
             List.of(
                 new EventDescriptor(new EventVersion(0 ,3), new PointsAdded(150)),
                 new EventDescriptor(new EventVersion(0 ,2), new PointsAdded(200))
             )))
         // Then
-            .expectNext(false)
             .verifyComplete();
 
-        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateMock.class, uuid))
-            .expectNext(new EventDescriptor(new EventVersion(0 ,1), new AggregateCreated("aggregate1")))
-            .expectNext(new EventDescriptor(new EventVersion(0 ,2), new PointsAdded(100)))
+        StepVerifier.create(reactiveCassandraEventDescriptorRepository.findAllByAggregateId(AggregateDataMock.class, uuid))
+            .expectNext(ed1, ed2)
             .verifyComplete();
     }
 }
 
-@Aggregate(tableName = "test_aggregate")
-class AggregateMock extends AggregateRoot {
-    public AggregateMock(UUID id) {
-        super(id);
-    }
+@AggregateData(tableName = "test_aggregate")
+@Value
+class AggregateDataMock {
+    @With
+    String userName;
+    @With
+    int points;
 }
 
 @Value
 @DomainEvent(event = "AggregateCreated")
-class AggregateCreated implements Event {
+class AggregateCreated implements Event<AggregateDataMock> {
     String userName;
 
     @JsonCreator
     public AggregateCreated(@JsonProperty("userName") String userName) {
         this.userName = userName;
     }
+
+    @Override
+    public AggregateUpdater<AggregateDataMock> createUpdater() {
+        return obj -> new AggregateDataMock(userName, 0);
+    }
 }
 
 @Value
 @DomainEvent(event = "PointsAdded")
-class PointsAdded implements Event {
+class PointsAdded implements Event<AggregateDataMock> {
     int points;
 
     @JsonCreator
     public PointsAdded(@JsonProperty("points") int points) {
         this.points = points;
     }
+
+    @Override
+    public AggregateUpdater<AggregateDataMock> createUpdater() {
+        return obj -> obj.withPoints(points);
+    }
 }
 
-@Value
 @DomainEvent(event = "SnapshotCreated")
-class SnapshotCreated implements SnapshotEvent {
-    String userName;
-    int points;
+@Data
+class SnapshotCreated implements SnapshotEvent<AggregateDataMock> {
+    private String userName;
+    private int points;
 
     @JsonCreator
     public SnapshotCreated(@JsonProperty("userName") String userName, @JsonProperty("points") int points) {
         this.userName = userName;
         this.points = points;
+    }
+
+    @Override
+    public AggregateUpdater<AggregateDataMock> createUpdater() {
+        return obj -> new AggregateDataMock(userName, points);
+    }
+
+    @Override
+    public String toString() {
+        return "SnapshotCreated{" +
+            "userName='" + userName + '\'' +
+            ", points=" + points +
+            '}';
     }
 }

@@ -1,5 +1,6 @@
 package com.aixoft.escassandra.service;
 
+import com.aixoft.escassandra.aggregate.Aggregate;
 import com.aixoft.escassandra.aggregate.AggregateRoot;
 
 import java.util.Optional;
@@ -12,21 +13,27 @@ public interface AggregateStore {
     /**
      * Persists all uncommitted events to the database.
      * <p>
-     * Events are applied on the aggregate (See {@link com.aixoft.escassandra.annotation.Subscribe}).
-     * Events are published to subscribed {@link com.aixoft.escassandra.service.EventListener} (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
+     * Store is performed in following order:
      * <p>
+     *     1. Events are applied on aggregate through updater (See {@link com.aixoft.escassandra.model.Event#createUpdater()}).
+     * <p>
+     *     2. If event applied successfully then events are persisted in cassandra database.
+     * <p>
+     *     3. If no event conflict on data persist,
+     *     then events are published to subscribed {@link com.aixoft.escassandra.service.EventListener}
+     *     (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
+     * <p>
+     *
      * List of uncommitted events will be cleared (See {@link AggregateRoot#getUncommittedEvents()}.
-     * <p>
-     * Committed version of the aggregate will be equal last event version (See {@link AggregateRoot#getCommittedVersion()}).
-     * <p>
-     * If data persistence failed then Aggregate is not updated and no message is published.
      *
-     * @param <T>       Type of aggregate.
-     * @param aggregate Aggregate to be stored.
+     * Committed and current version of the aggregate will be equal last event version
+     * (See {@link AggregateRoot#getCommittedVersion()} ()} and {@link AggregateRoot#getCurrentVersion()}).
      *
-     * @return Aggregate if operation was successful or empty otherwise.
+     * @param aggregate     Aggregate to be stored.
+     * @param <T>           Aggregate data type.
+     * @return              Committed copy of aggregate if operation was successful or empty otherwise.
      */
-    <T extends AggregateRoot> Optional<T> save(T aggregate);
+    <T> Optional<Aggregate<T>> save(Aggregate<T> aggregate);
 
     /**
      * Restores aggregate from events using event sourcing.
@@ -37,13 +44,13 @@ public interface AggregateStore {
      * <p>
      * Committed version of the aggregate will be equal last event version (See {@link AggregateRoot#getCommittedVersion()}).
      *
-     * @param <T>            Aggregate type.
-     * @param aggregateId    UUID of the aggregate.
-     * @param aggregateClass Aggregate class.
+     * @param <T>                   Aggregate data type.
+     * @param aggregateId           UUID of the aggregate.
+     * @param aggregateDataClass    Aggregate data class.
      *
      * @return Restored aggregate or empty if aggregate not found.
      */
-    <T extends AggregateRoot> Optional<T> loadById(UUID aggregateId, Class<T> aggregateClass);
+    <T> Optional<Aggregate<T>> loadById(UUID aggregateId, Class<T> aggregateDataClass);
 
     /**
      * Restores aggregate from events using event sourcing.
@@ -54,12 +61,12 @@ public interface AggregateStore {
      * <p>
      * Committed version of the aggregate will be equal last event version (See {@link AggregateRoot#getCommittedVersion()}).
      *
-     * @param <T>             Aggregate type.
-     * @param aggregateId     UUID of the aggregate.
-     * @param snapshotVersion Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
-     * @param aggregateClass  Aggregate class.
+     * @param <T>                   Aggregate data type.
+     * @param aggregateId           UUID of the aggregate.
+     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
+     * @param aggregateDataClass    Aggregate data class.
      *
      * @return Restored aggregate or empty if aggregate not found.
      */
-    <T extends AggregateRoot> Optional<T> loadById(UUID aggregateId, int snapshotVersion, Class<T> aggregateClass);
+    <T> Optional<Aggregate<T>> loadById(UUID aggregateId, int snapshotVersion, Class<T> aggregateDataClass);
 }

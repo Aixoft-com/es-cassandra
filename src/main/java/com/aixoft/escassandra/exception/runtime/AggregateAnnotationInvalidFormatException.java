@@ -1,13 +1,15 @@
 package com.aixoft.escassandra.exception.runtime;
 
+import com.aixoft.escassandra.annotation.AggregateData;
+
 /**
  * The type Aggregate annotation invalid format exception.
  *
- * See {@link com.aixoft.escassandra.annotation.Aggregate}.
+ * See {@link AggregateData}.
  */
 public class AggregateAnnotationInvalidFormatException extends RuntimeException {
     /**
-     * Instantiates a new Aggregate annotation invalid format exception.
+     * Instantiates a exception indicating invalid format of aggregate annotation.
      *
      * @param message Exception message.
      */

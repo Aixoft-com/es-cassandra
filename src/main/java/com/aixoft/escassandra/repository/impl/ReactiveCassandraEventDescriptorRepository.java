@@ -1,15 +1,13 @@
 package com.aixoft.escassandra.repository.impl;
 
-import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.repository.ReactiveEventDescriptorRepository;
 import com.aixoft.escassandra.repository.StatementBinder;
 import com.aixoft.escassandra.repository.converter.EventReadingConverter;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import com.aixoft.escassandra.repository.util.EventDescriptorRowUtil;
-import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
@@ -50,50 +48,52 @@ public class ReactiveCassandraEventDescriptorRepository implements ReactiveEvent
      * If any event with same version is is already persisted in the database then operation will fail and no element
      * will be stored.
      *
-     * @param aggregateClass Type of the aggregate.
-     * @param aggregateId UUID of aggregate for which EventDescriptors will be inserted.
-     * @param eventDescriptors EventDescriptors to be inserted.
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate for which EventDescriptors will be inserted.
+     * @param eventDescriptors      EventDescriptors to be inserted.
+     *
      * @return Mono with TRUE indicating if insert was successful or FALSE otherwise.
      */
     @Override
-    public Mono<Boolean> insertAll(@NonNull Class<? extends AggregateRoot> aggregateClass,
+    public Flux<EventDescriptor> insertAll(@NonNull Class<?> aggregateDataClass,
                                              @NonNull UUID aggregateId,
                                              @NonNull List<EventDescriptor> eventDescriptors) {
 
-        return Mono.fromCallable(() -> statementBinder.bindInsertEventDescriptors(aggregateClass, aggregateId, eventDescriptors))
-            .flux()
-            .flatMap(session::executeReactive)
-            .map(ReactiveRow::wasApplied)
-            .reduce(Boolean.FALSE, (init, res) -> res);
+        return Mono.fromCallable(() -> statementBinder.bindInsertEventDescriptors(aggregateDataClass, aggregateId, eventDescriptors))
+            .flatMapMany(session::executeReactive)
+            .flatMap(inserted -> inserted.wasApplied() ? Flux.fromIterable(eventDescriptors) : Flux.empty());
     }
 
     /**
-     * Creates Flux for finding all event descriptors for aggregate of given type and id.
-     * @param aggregateClass Type of the aggregate.
-     * @param aggregateId UUID of aggregate.
+     * Creates Flux for finding all event descriptors for aggregate of given data type and id.
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate.
+     *
      * @return Flux from event descriptors.
      */
     @Override
-    public Flux<EventDescriptor> findAllByAggregateId(Class<? extends AggregateRoot> aggregateClass, UUID aggregateId) {
+    public Flux<EventDescriptor> findAllByAggregateId(Class<?> aggregateDataClass, UUID aggregateId) {
         return executeFindStatement(
-            statementBinder.bindFindAllEventDescriptors(aggregateClass, aggregateId)
+            statementBinder.bindFindAllEventDescriptors(aggregateDataClass, aggregateId)
         );
     }
 
     /**
      * Creates Flux for finding all event descriptors since given major version (snapshot number)
      * for aggregate of given type and id.
-     * @param aggregateClass Type of the aggregate.
-     * @param aggregateId UUID of aggregate.
-     * @param snapshotVersion Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate.
+     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
+     *                              from which aggregate will be restored.
+     *
      * @return Flux from event descriptors.
      */
     @Override
-    public Flux<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
+    public Flux<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<?> aggregateDataClass,
                                                                    @NonNull UUID aggregateId,
                                                                    int snapshotVersion) {
         return executeFindStatement(
-            statementBinder.bindFindAllSinceLastSnapshotEventDescriptors(aggregateClass, aggregateId, snapshotVersion)
+            statementBinder.bindFindAllSinceLastSnapshotEventDescriptors(aggregateDataClass, aggregateId, snapshotVersion)
         );
     }
 

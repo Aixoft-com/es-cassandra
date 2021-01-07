@@ -8,10 +8,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
 import java.lang.annotation.Annotation;
@@ -40,7 +38,6 @@ public class EventClassByNameReflection {
 
         final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(true);
         provider.addIncludeFilter(new AssignableTypeFilter(Event.class));
-        provider.addIncludeFilter(new AnnotationTypeFilter(DomainEvent.class));
 
         Arrays.stream(basePackages).forEach(
             basePackage -> addEventsByNameInPackage(eventClassByName, provider, basePackage)
@@ -57,27 +54,37 @@ public class EventClassByNameReflection {
                 eventClass = (Class<? extends Event>) Class.forName(beanDefinition.getBeanClassName());
             } catch (ClassNotFoundException ex) {
                 log.error(ex.getMessage(), ex);
-                throw new ClassNotFoundByBeanDefinitionException(String.format("Not able to find class by name %s.", beanDefinition.getBeanClassName()));
+                throw new ClassNotFoundByBeanDefinitionException(String.format("Not able to find class by name '%s'.", beanDefinition.getBeanClassName()));
+            }
+            if(!Event.class.isAssignableFrom(eventClass)) {
+                continue;
+            }
+            Annotation annotation = eventClass.getAnnotation(DomainEvent.class);
+            if (annotation == null) {
+                throw new InvalidDomainEventDefinitionException(String.format("Event '%s' is not annotated with '%s'", eventClass.getName(), DomainEvent.class.getName()));
             }
 
-            Annotation annotation = eventClass.getAnnotation(DomainEvent.class);
             if (annotation instanceof DomainEvent) {
                 DomainEvent domainEvent = (DomainEvent) annotation;
 
-                if (domainEvent.event() == null || domainEvent.event().isBlank()) {
-                    throw new InvalidDomainEventDefinitionException(String.format("Event is null or blank in %s.", eventClass.getName()));
-                }
-
-                if (domainEventMap.containsKey(domainEvent.event())) {
-                    throw new InvalidDomainEventDefinitionException(String.format("Duplicated event '%s' in [%s, %s].",
-                        domainEvent.event(),
-                        eventClass.getName(),
-                        domainEventMap.get(domainEvent.event()))
-                    );
-                }
+                verifyDomainEvent(domainEventMap, eventClass, domainEvent);
 
                 domainEventMap.put(domainEvent.event(), eventClass);
             }
+        }
+    }
+
+    private static void verifyDomainEvent(Map<String, Class<? extends Event>> domainEventMap, Class<? extends Event> eventClass, DomainEvent domainEvent) {
+        if (domainEvent.event() == null || domainEvent.event().isBlank()) {
+            throw new InvalidDomainEventDefinitionException(String.format("Event is null or blank in '%s'.", eventClass.getName()));
+        }
+
+        if (domainEventMap.containsKey(domainEvent.event())) {
+            throw new InvalidDomainEventDefinitionException(String.format("Duplicated event '%s' in ['%s', '%s'].",
+                domainEvent.event(),
+                eventClass.getName(),
+                domainEventMap.get(domainEvent.event()))
+            );
         }
     }
 

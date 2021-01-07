@@ -1,26 +1,26 @@
 package com.aixoft.escassandra.aggregate;
 
-import com.aixoft.escassandra.exception.runtime.AggregateCreationException;
 import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.model.EventVersion;
+import com.aixoft.escassandra.model.SnapshotEvent;
+import com.aixoft.escassandra.repository.model.EventDescriptor;
 import lombok.NonNull;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Base class for each aggregate.
- * It is required that child Aggregate class has defined constructor with single parameter of type {@code UUID}.
+ *
+ * @param <T> Aggregate data type parameter.
  */
-public abstract class AggregateRoot {
+public abstract class AggregateRoot<T> {
     private EventVersion committedVersion;
+    private EventVersion currentVersion;
     private final UUID id;
-    private final List<Event> changes = new LinkedList<>();
+    private final LinkedList<EventDescriptor> changes = new LinkedList<>();
 
     /**
-     * Constructor.
-     * It is required that child Aggregate class has defined constructor with single parameter of type {@code UUID}.
+     * Constructs base for the aggregate.
      *
      * @param id UUID of the aggregate.
      */
@@ -29,17 +29,42 @@ public abstract class AggregateRoot {
     }
 
     /**
-     * Method results in adding event on changes queue.
-     * It does not modify aggregate data connected with the event.
-     *
+     * Adds events to unpublished events' queue. It does not modify aggregate data connected with the event.
      * <p>
-     * Event will be applied on aggregate save: {@link com.aixoft.escassandra.service.AggregateStore#save(AggregateRoot)}
-     * or {@link com.aixoft.escassandra.service.ReactiveAggregateStore#save(AggregateRoot)}
+     * Updates aggregate's current version (See {@link EventVersion#getNextMinor()}).
      *
-     * @param event the event
+     * @param events the event list.
      */
-    protected void publish(@NonNull Event event) {
-        changes.add(event);
+    protected void publish(@NonNull List<Event<T>> events) {
+        for(Event<T> event: events) {
+            currentVersion = currentVersion.getNextMinor();
+            changes.add(new EventDescriptor(currentVersion, event));
+        }
+    }
+
+    /**
+     * Adds event to unpublished events' queue. It does not modify aggregate data connected with the event.
+     * <p>
+     * Updates aggregate's current version (See {@link EventVersion#getNextMinor()}).
+     *
+     * @param event the event.
+     */
+    protected void publish(@NonNull Event<T> event) {
+        currentVersion = currentVersion.getNextMinor();
+        changes.add(new EventDescriptor(currentVersion, event));
+    }
+
+
+    /**
+     * Publishes snapshot event. It does not modify aggregate data connected with the event.
+     * <p>
+     * Updates aggregate's current version (See {@link EventVersion#getNextMajor()}).
+     *
+     * @param event the snapshot event.
+     */
+    protected void publishSnapshot(@NonNull SnapshotEvent<T> event) {
+        currentVersion = currentVersion.getNextMajor();
+        changes.add(new EventDescriptor(currentVersion, event));
     }
 
     /**
@@ -52,37 +77,58 @@ public abstract class AggregateRoot {
     }
 
     /**
-     * Committed version is version of the last event persisted in database.
+     * Gets committed version which indicates last committed event.
      *
-     * @return Committed version.
+     * @return The committed version.
      */
     public EventVersion getCommittedVersion() {
         return committedVersion;
     }
 
+
     /**
-     * Internal use only. Sets committed version.
+     * Sets committed version which indicates last committed event.
      *
-     * @param committedVersion Version of last committed event.
+     * @param committedVersion the committed version.
      */
-    public void setCommittedVersion(EventVersion committedVersion) {
+    protected void setCommittedVersion(EventVersion committedVersion) {
         this.committedVersion = committedVersion;
     }
 
     /**
-     * Gets uncommitted events.
+     * Gets current version which indicates last added event.
      *
-     * @return All events which were published for the aggregate but are not persisted in the database.
+     * @return The current version.
      */
-    public List<Event> getUncommittedEvents() {
-        return changes;
+    public EventVersion getCurrentVersion() {
+        return currentVersion;
     }
 
     /**
-     * Internal use only. Removed all uncommitted events.
+     * Sets current version which indicates last added event.
+     *
+     * @param currentVersion the current version.
      */
-    public void markEventsAsCommitted() {
-        changes.clear();
+    protected void setCurrentVersion(EventVersion currentVersion) {
+        this.currentVersion = currentVersion;
+    }
+
+    /**
+     * Gets unmodifiable list of uncommitted events.
+     *
+     * @return All events which were published for the aggregate but not committed.
+     */
+    public List<EventDescriptor> getUncommittedEvents() {
+        return Collections.unmodifiableList(changes);
+    }
+
+    /**
+     * Gets original list of uncommitted events.
+     *
+     * @return All events which were published for the aggregate but not committed.
+     */
+    protected LinkedList<EventDescriptor> getOriginalUncommittedEvents() {
+        return changes;
     }
 
     @Override
@@ -91,25 +137,5 @@ public abstract class AggregateRoot {
             "committedVersion=" + committedVersion +
             ", id=" + id +
             '}';
-    }
-
-    /**
-     * Creates Aggregate by given type and UUID.
-     * It is required that Aggregate class has defined constructor with single parameter of type {@code UUID}.
-     *
-     * @param <T>            Type of the aggregate.
-     * @param aggregateId    UUID of the aggregate.
-     * @param aggregateClass Aggregate class.
-     *
-     * @return New instance of Aggregate with given type.
-     */
-    public static <T extends AggregateRoot> T create(UUID aggregateId, Class<T> aggregateClass) {
-        T aggregateRoot;
-        try {
-            aggregateRoot = aggregateClass.getDeclaredConstructor(UUID.class).newInstance(aggregateId);
-        } catch (ReflectiveOperationException ex) {
-            throw new AggregateCreationException(String.format("Not able to create instance of '%s'.", aggregateClass.getName()), ex);
-        }
-        return aggregateRoot;
     }
 }

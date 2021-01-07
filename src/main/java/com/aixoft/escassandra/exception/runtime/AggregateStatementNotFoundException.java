@@ -5,7 +5,7 @@ package com.aixoft.escassandra.exception.runtime;
  */
 public class AggregateStatementNotFoundException extends RuntimeException {
     /**
-     * Instantiates a new Aggregate statement not found exception.
+     * Instantiates a exception indicating not found statement.
      *
      * @param message Exception message.
      */

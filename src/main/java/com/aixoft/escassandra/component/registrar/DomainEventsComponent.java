@@ -1,7 +1,9 @@
 package com.aixoft.escassandra.component.registrar;
 
+import com.aixoft.escassandra.annotation.DomainEvent;
 import com.aixoft.escassandra.component.DomainEvents;
 import com.aixoft.escassandra.config.util.EventClassByNameReflection;
+import com.aixoft.escassandra.model.DummyPreSnapshotEvent;
 import com.aixoft.escassandra.model.Event;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -23,6 +25,10 @@ public class DomainEventsComponent implements DomainEvents {
      */
     public DomainEventsComponent(String[] basePackages) {
         eventClassByName = EventClassByNameReflection.find(basePackages);
+        eventClassByName.put(
+                DummyPreSnapshotEvent.class.getAnnotation(DomainEvent.class).event(),
+                DummyPreSnapshotEvent.class
+            );
     }
 
     /**

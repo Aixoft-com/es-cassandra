@@ -1,7 +1,7 @@
 package com.aixoft.escassandra.benchmark.test.service;
 
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.benchmark.model.AggregateMock;
+import com.aixoft.escassandra.benchmark.model.AggregateDataMock;
 import com.aixoft.escassandra.benchmark.runner.BenchmarkWithContext;
 import com.aixoft.escassandra.benchmark.util.EventDescriptorGenerator;
 import com.aixoft.escassandra.repository.impl.ReactiveCassandraEventDescriptorRepository;
@@ -35,7 +35,7 @@ public class ReactiveLoadAggregateWith1000EventsWithRepositoryMockedBenchmark ex
     @BeforeEach
     private void beforeEach() {
 
-        when(cassandraEventDescriptorRepository.findAllByAggregateId(AggregateMock.class, uuid))
+        when(cassandraEventDescriptorRepository.findAllByAggregateId(AggregateDataMock.class, uuid))
             .thenReturn(Flux.fromIterable(EventDescriptorGenerator.generate(NUMBER_OF_EVENTS_IN_BATCH)));
     }
 
@@ -46,7 +46,7 @@ public class ReactiveLoadAggregateWith1000EventsWithRepositoryMockedBenchmark ex
 
     @Benchmark
     public void loadAggregateWith1000Events(){
-        cassandraAggregateStore.loadById(uuid, AggregateMock.class)
+        cassandraAggregateStore.loadById(uuid, AggregateDataMock.class)
             .block();
     }
 }

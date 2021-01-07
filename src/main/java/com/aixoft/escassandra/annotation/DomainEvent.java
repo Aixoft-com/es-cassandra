@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation describes event name which will be used for persistence in database.
- * Event name shall be unique for given aggregate type.
+ * Event name shall be unique for given aggregate data type.
  * <p>
  * Annotation shall be used on classes which implement {@link com.aixoft.escassandra.model.Event} interface.
  */
@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface DomainEvent {
     /**
      * Event name.
+     * <p>
+     * (Note: BeforeSnapshotCreated' name is reserved and shall not be used.)
      *
      * @return String with Event name.
      */

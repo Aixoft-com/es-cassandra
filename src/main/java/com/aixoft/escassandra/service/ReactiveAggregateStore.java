@@ -1,7 +1,7 @@
 package com.aixoft.escassandra.service;
 
+import com.aixoft.escassandra.aggregate.Aggregate;
 import com.aixoft.escassandra.aggregate.AggregateRoot;
-import com.aixoft.escassandra.exception.checked.AggregateFailedSaveException;
 import com.aixoft.escassandra.exception.checked.AggregateNotFoundException;
 import reactor.core.publisher.Mono;
 
@@ -12,23 +12,30 @@ import java.util.UUID;
  */
 public interface ReactiveAggregateStore {
     /**
-     * Creates Mono for persisting all uncommitted events to the database.
+     * Creates Mono for saving all uncommitted events to the database.
      * <p>
-     * Events are applied on the aggregate (See {@link com.aixoft.escassandra.annotation.Subscribe}).
-     * Events are published to subscribed {@link com.aixoft.escassandra.service.EventListener} (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
+     * Store is performed in following order:
      * <p>
+     *     1. Events are applied on aggregate through updater (See {@link com.aixoft.escassandra.model.Event#createUpdater()}).
+     * <p>
+     *     2. If event applied successfully then events are persisted in cassandra database.
+     * <p>
+     *     3. If no event conflict on data persist,
+     *     then events are published to subscribed {@link com.aixoft.escassandra.service.EventListener}
+     *     (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
+     * <p>
+     *
      * List of uncommitted events will be cleared (See {@link AggregateRoot#getUncommittedEvents()}.
-     * <p>
-     * Committed version of the aggregate will be equal last event version (See {@link AggregateRoot#getCommittedVersion()}).
-     * <p>
-     * If data persistence failed then Aggregate is not updated and no message is published.
      *
-     * @param <T>       Type of aggregate.
+     * Committed and current version of the aggregate will be equal last event version
+     * (See {@link AggregateRoot#getCommittedVersion()} ()} and {@link AggregateRoot#getCurrentVersion()}).
+     *
      * @param aggregate Aggregate to be stored.
+     * @param <T>       Aggregate data type.
      *
-     * @return Mono with aggregate if operation was successful or Mono.error({@link AggregateFailedSaveException}) otherwise.
+     * @return Mono of aggregate's committed copy if operation was successful or empty otherwise.
      */
-    <T extends AggregateRoot> Mono<T> save(T aggregate);
+    <T> Mono<Aggregate<T>> save(Aggregate<T> aggregate);
 
     /**
      * Creates Mono for restoring aggregate from events using event sourcing.
@@ -39,13 +46,13 @@ public interface ReactiveAggregateStore {
      * <p>
      * Committed version of the aggregate will be equal last event version (See {@link AggregateRoot#getCommittedVersion()}).
      *
-     * @param <T>            Aggregate type.
-     * @param aggregateId    UUID of the aggregate.
-     * @param aggregateClass Class of Aggregate.
+     * @param <T>                   Aggregate type.
+     * @param aggregateId           UUID of the aggregate.
+     * @param aggregateDataClass    Aggregate data class.
      *
      * @return Mono from restored aggregate or Mono.error({@link AggregateNotFoundException}) otherwise.
      */
-    <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, Class<T> aggregateClass);
+    <T> Mono<Aggregate<T>> loadById(UUID aggregateId, Class<T> aggregateDataClass);
 
     /**
      * Creates Mono for restoring aggregate from events using event sourcing.
@@ -56,12 +63,12 @@ public interface ReactiveAggregateStore {
      * <p>
      * Committed version of the aggregate will be equal last event version (See {@link AggregateRoot#getCommittedVersion()}).
      *
-     * @param <T>             Aggregate type.
-     * @param aggregateId     UUID of the aggregate.
-     * @param snapshotVersion Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
-     * @param aggregateClass  Class of Aggregate.
+     * @param <T>                   Aggregate type.
+     * @param aggregateId           UUID of the aggregate.
+     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
+     * @param aggregateDataClass    Aggregate data class.
      *
      * @return Mono from restored aggregate or Mono.error({@link AggregateNotFoundException}) otherwise.
      */
-    <T extends AggregateRoot> Mono<T> loadById(UUID aggregateId, int snapshotVersion, Class<T> aggregateClass);
+    <T> Mono<Aggregate<T>> loadById(UUID aggregateId, int snapshotVersion, Class<T> aggregateDataClass);
 }

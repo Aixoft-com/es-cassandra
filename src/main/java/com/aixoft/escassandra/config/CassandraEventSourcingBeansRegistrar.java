@@ -1,8 +1,7 @@
 package com.aixoft.escassandra.config;
 
-import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.component.registrar.AggregateComponent;
+import com.aixoft.escassandra.component.registrar.AggregateDataComponent;
 import com.aixoft.escassandra.component.registrar.DomainEventsComponent;
 import com.aixoft.escassandra.config.util.AggregateTypeFilter;
 import com.aixoft.escassandra.repository.converter.EventReadingConverter;
@@ -26,10 +25,9 @@ import java.util.Map;
  */
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CassandraEventSourcingBeansRegistrar implements ImportBeanDefinitionRegistrar {
-
     /**
      * Registers converters beans and performs autoconfiguration of
-     * {@link DomainEventsComponent} and {@link AggregateComponent}
+     * {@link DomainEventsComponent} and {@link AggregateDataComponent}
      * based on {@link EnableCassandraEventSourcing} annotation.
      */
     @Override
@@ -41,10 +39,10 @@ public class CassandraEventSourcingBeansRegistrar implements ImportBeanDefinitio
         }
 
         String[] aggregatePackages = (String[]) attributes.get("aggregatePackages");
-        List<Class<? extends AggregateRoot>> aggregateClasses = AggregateTypeFilter.filterAllAggregateClasses(aggregatePackages, AggregateRoot.class);
+        List<Class<?>> aggregateClasses = AggregateTypeFilter.filterAllAggregateDataClasses(aggregatePackages);
 
         BeanDefinitionReaderUtils.registerWithGeneratedName(
-            BeanDefinitionBuilder.genericBeanDefinition(AggregateComponent.class)
+            BeanDefinitionBuilder.genericBeanDefinition(AggregateDataComponent.class)
                 .addConstructorArgValue(aggregateClasses)
                 .getBeanDefinition(),
             registry

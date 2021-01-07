@@ -1,6 +1,5 @@
 package com.aixoft.escassandra.component;
 
-import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 
 /**
@@ -10,27 +9,27 @@ public interface PreparedStatements {
     /**
      * Gets insert prepared statement.
      *
-     * @param aggregateClass Aggregate class.
+     * @param aggregateDataClass Aggregate data class.
      *
-     * @return Statement to insert events for given aggregate type.
+     * @return Statement to insert events for given aggregate data type.
      */
-    PreparedStatement getInsertPreparedStatement(Class<? extends AggregateRoot> aggregateClass);
+    PreparedStatement getInsertPreparedStatement(Class<?> aggregateDataClass);
 
     /**
      * Gets select all prepared statement.
      *
-     * @param aggregateClass Aggregate class.
+     * @param aggregateDataClass Aggregate data class.
      *
-     * @return Statement to select all events for given aggregate type.
+     * @return Statement to select all events for given aggregate data type.
      */
-    PreparedStatement getSelectAllPreparedStatement(Class<? extends AggregateRoot> aggregateClass);
+    PreparedStatement getSelectAllPreparedStatement(Class<?> aggregateDataClass);
 
     /**
      * Gets select all since snapshot prepared statement.
      *
-     * @param aggregateClass Aggregate class.
+     * @param aggregateDataClass Aggregate data class.
      *
-     * @return Statement to select all events with major version greater then provided for given aggregate type.
+     * @return Statement to select all events with major version greater then provided for given aggregate data type.
      */
-    PreparedStatement getSelectAllSinceSnapshotPreparedStatement(Class<? extends AggregateRoot> aggregateClass);
+    PreparedStatement getSelectAllSinceSnapshotPreparedStatement(Class<?> aggregateDataClass);
 }

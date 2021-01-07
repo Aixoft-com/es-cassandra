@@ -1,9 +1,8 @@
 package com.aixoft.escassandra.component.impl;
 
-import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.component.PreparedStatements;
-import com.aixoft.escassandra.component.registrar.AggregateComponent;
+import com.aixoft.escassandra.component.registrar.AggregateDataComponent;
 import com.aixoft.escassandra.component.util.TableNameUtil;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -17,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Creates prepared statements for each aggregate type to optimize performance of cassandra queries.
+ * Creates prepared statements for each aggregate data type to optimize performance of cassandra queries.
  */
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PreparedStatementsComponent implements PreparedStatements {
@@ -32,12 +31,12 @@ public class PreparedStatementsComponent implements PreparedStatements {
     /**
      * Instantiates a new Prepared statements component.
      *
-     * @param aggregateComponent the aggregate component
-     * @param cassandraSession   the cassandra session
+     * @param aggregateDataComponent    the aggregate component
+     * @param cassandraSession          the cassandra session
      */
-    public PreparedStatementsComponent(@NonNull AggregateComponent aggregateComponent, @NonNull CassandraSession cassandraSession) {
-        if (aggregateComponent.getClasses() != null) {
-            initPreparedStatements(aggregateComponent.getClasses(), cassandraSession.getSession());
+    public PreparedStatementsComponent(@NonNull AggregateDataComponent aggregateDataComponent, @NonNull CassandraSession cassandraSession) {
+        if (aggregateDataComponent.getClasses() != null) {
+            initPreparedStatements(aggregateDataComponent.getClasses(), cassandraSession.getSession());
         }
     }
 
@@ -45,39 +44,41 @@ public class PreparedStatementsComponent implements PreparedStatements {
     /**
      * Gets insert prepared statement.
      *
-     * @return Statement to insert events for given aggregate type.
+     * @param aggregateDataClass Aggregate data class.
+     *
+     * @return Statement to insert events for given aggregate data type.
      */
     @Override
-    public PreparedStatement getInsertPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
-        return insertStatementsByAggregateClass.get(aggregateClass.getName());
+    public PreparedStatement getInsertPreparedStatement(@NonNull Class<?> aggregateDataClass) {
+        return insertStatementsByAggregateClass.get(aggregateDataClass.getName());
     }
 
     /**
      * Gets select all prepared statement.
      *
-     * @param aggregateClass Aggregate class.
-     * @return Statement to select all events for given aggregate type.
+     * @param aggregateDataClass Aggregate data class.
+     * @return Statement to select all events for given aggregate data type.
      */
     @Override
-    public PreparedStatement getSelectAllPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
-        return selectAllStatementsByAggregateClass.get(aggregateClass.getName());
+    public PreparedStatement getSelectAllPreparedStatement(@NonNull Class<?> aggregateDataClass) {
+        return selectAllStatementsByAggregateClass.get(aggregateDataClass.getName());
     }
 
     /**
      * Gets select all since snapshot prepared statement.
      *
-     * @param aggregateClass Aggregate class.
+     * @param aggregateDataClass Aggregate data class.
      *
-     * @return Statement to select all events with major version greater then provided for given aggregate type.
+     * @return Statement to select all events with major version greater then provided for given aggregate data type.
      */
     @Override
-    public PreparedStatement getSelectAllSinceSnapshotPreparedStatement(@NonNull Class<? extends AggregateRoot> aggregateClass) {
-        return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateClass.getName());
+    public PreparedStatement getSelectAllSinceSnapshotPreparedStatement(@NonNull Class<?> aggregateDataClass) {
+        return selectAllSinceSnapshotStatementsByAggregateClass.get(aggregateDataClass.getName());
     }
 
-    private void initPreparedStatements(List<Class<? extends AggregateRoot>> aggregateClasses, @NonNull CqlSession session) {
-        aggregateClasses.forEach(aggregateClass -> {
-            String tableName = TableNameUtil.fromAggregateClass(aggregateClass);
+    private void initPreparedStatements(List<Class<?>> aggregateDataClasses, @NonNull CqlSession session) {
+        aggregateDataClasses.forEach(aggregateClass -> {
+            String tableName = TableNameUtil.fromAggregateDataClass(aggregateClass);
 
             insertStatementsByAggregateClass.put(aggregateClass.getName(), session.prepare(SimpleStatement.newInstance(String.format(INSERT_STATEMENT_FORMAT, tableName))));
             selectAllStatementsByAggregateClass.put(aggregateClass.getName(), session.prepare(SimpleStatement.newInstance(String.format(SELECT_ALL_STATEMENT_FORMAT, tableName))));

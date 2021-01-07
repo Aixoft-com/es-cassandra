@@ -7,20 +7,20 @@ import static org.junit.jupiter.api.Assertions.*;
 class EventVersionTest {
 
     @Test
-    void getNext_NoSnapshotEvent_IncrementMinor() {
+    void getNextMinor_ReturnsNewEventVersionWithMinorIncremented() {
         EventVersion eventVersion = new EventVersion(1, 1);
 
-        EventVersion nextVersion = eventVersion.getNext(false);
+        EventVersion nextVersion = eventVersion.getNextMinor();
 
         assertEquals(1, nextVersion.getMajor());
         assertEquals(2, nextVersion.getMinor());
     }
 
     @Test
-    void getNext_napshotEvent_IncrementMajorAndResetMinor() {
+    void getNextMajor_ReturnsNewEventVersionWithMajorIncrementedAndMinorReset() {
         EventVersion eventVersion = new EventVersion(2, 2);
 
-        EventVersion nextVersion = eventVersion.getNext(true);
+        EventVersion nextVersion = eventVersion.getNextMajor();
 
         assertEquals(3, nextVersion.getMajor());
         assertEquals(0, nextVersion.getMinor());

@@ -1,9 +1,9 @@
 package com.aixoft.escassandra.benchmark.test.service;
 
+import com.aixoft.escassandra.aggregate.Aggregate;
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.benchmark.model.AggregateMock;
-import com.aixoft.escassandra.benchmark.model.event.AggregateCreated;
-import com.aixoft.escassandra.benchmark.model.event.NameChanged;
+import com.aixoft.escassandra.benchmark.model.AggregateDataMock;
+import com.aixoft.escassandra.benchmark.model.command.ChangeNameCommand;
 import com.aixoft.escassandra.benchmark.runner.BenchmarkWithContext;
 import com.aixoft.escassandra.service.impl.CassandraAggregateStore;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -33,18 +33,17 @@ public class LoadAggregateWith1000EventsBenchmark extends BenchmarkWithContext {
 
     @Setup
     public void setup() {
-        AggregateMock aggregateMock = new AggregateMock(uuid);
-        aggregateMock.publishEvent(new AggregateCreated("name"));
+        Aggregate<AggregateDataMock> aggregate = Aggregate.create(uuid);
 
-        for(int it = 1; it < NUMBER_OF_EVENTS_IN_BATCH; it++) {
-            aggregateMock.publishEvent(new NameChanged("Name+" + it));
+        for(int it = 0; it < NUMBER_OF_EVENTS_IN_BATCH; it++) {
+            aggregate.handleCommand(new ChangeNameCommand("Name+" + it));
         }
 
-        cassandraAggregateStore.save(aggregateMock);
+        cassandraAggregateStore.save(aggregate);
     }
 
     @Benchmark
     public void loadAggregateWith1000Events(){
-        cassandraAggregateStore.loadById(uuid, AggregateMock.class);
+        cassandraAggregateStore.loadById(uuid, AggregateDataMock.class);
     }
 }

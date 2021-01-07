@@ -29,6 +29,7 @@
         <jacoco.itReportFile>${jacoco.itReportDirectory}/integrationTest.exec</jacoco.itReportFile>
         <junit.utReportDirectory>${project.testresult.directory}/test</junit.utReportDirectory>
         <junit.itReportDirectory>${project.testresult.directory}/integrationTest</junit.itReportDirectory>
+        <projectlombok.version>1.18.16</projectlombok.version>
     </properties>
 
     <dependencies>
@@ -69,6 +70,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${projectlombok.version}</version>
             <optional>true</optional>
         </dependency>
 

@@ -6,18 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation describes table name which will be used for aggregate persistence in database.
+ * Annotation describes table name which will be used for aggregate data persistence in database.
  * <p>
  * Table name shall be unique for each aggregate type.
  * It shall contain only alphanumerical characters including '_'.
- * <p>
- * Annotation shall be used on classes which extend {@link com.aixoft.escassandra.aggregate.AggregateRoot} base class.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Aggregate {
+public @interface AggregateData {
     /**
-     * Name of cassandra table to persist aggregate.
+     * Name of cassandra table to persist aggregate data.
      *
      * @return Cassandra table name.
      */

@@ -1,6 +1,5 @@
 package com.aixoft.escassandra.benchmark.util;
 
-import com.aixoft.escassandra.benchmark.model.event.AggregateCreated;
 import com.aixoft.escassandra.benchmark.model.event.NameChanged;
 import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
@@ -17,10 +16,9 @@ public final class EventDescriptorGenerator {
 
         EventVersion eventVersion = EventVersion.initial();
 
-        eventDescriptors.add(new EventDescriptor(eventVersion, new AggregateCreated("name")));
-        for(int it = 1; it < count; it++) {
-            eventVersion = eventVersion.getNext(true);
+        for(int it = 0; it < count; it++) {
             eventDescriptors.add(new EventDescriptor(eventVersion, new NameChanged("Name_" + it)));
+            eventVersion = eventVersion.getNextMinor();
         }
 
         return eventDescriptors;

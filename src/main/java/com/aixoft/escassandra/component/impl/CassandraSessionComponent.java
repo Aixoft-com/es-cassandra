@@ -1,7 +1,7 @@
 package com.aixoft.escassandra.component.impl;
 
 import com.aixoft.escassandra.component.CassandraSession;
-import com.aixoft.escassandra.component.registrar.AggregateComponent;
+import com.aixoft.escassandra.component.registrar.AggregateDataComponent;
 import com.aixoft.escassandra.component.util.TableNameUtil;
 import com.aixoft.escassandra.config.EsCassandraProperties;
 import com.aixoft.escassandra.config.enums.SchemaAction;
@@ -31,18 +31,18 @@ import java.util.stream.Collectors;
 public class CassandraSessionComponent implements CassandraSession, InitializingBean {
 
     private final EsCassandraProperties esCassandraProperties;
-    private final AggregateComponent aggregateComponent;
+    private final AggregateDataComponent aggregateDataComponent;
     private CqlSession session;
 
     /**
      * Instantiates a new Cassandra session component.
      *
      * @param esCassandraProperties Cassandra properties.
-     * @param aggregateComponent    Aggregate component with aggregate classes.
+     * @param aggregateDataComponent    Aggregate component with aggregate classes.
      */
-    public CassandraSessionComponent(@NonNull EsCassandraProperties esCassandraProperties, @NonNull AggregateComponent aggregateComponent) {
+    public CassandraSessionComponent(@NonNull EsCassandraProperties esCassandraProperties, @NonNull AggregateDataComponent aggregateDataComponent) {
         this.esCassandraProperties = esCassandraProperties;
-        this.aggregateComponent = aggregateComponent;
+        this.aggregateDataComponent = aggregateDataComponent;
     }
 
     /**
@@ -81,8 +81,8 @@ public class CassandraSessionComponent implements CassandraSession, Initializing
                 }
 
                 if(tableModifier != null) {
-                    aggregateComponent.getClasses().stream()
-                        .map(TableNameUtil::fromAggregateClass)
+                    aggregateDataComponent.getClasses().stream()
+                        .map(TableNameUtil::fromAggregateDataClass)
                         .forEach(table -> tableModifier.accept(tempSession, table));
                 }
             }

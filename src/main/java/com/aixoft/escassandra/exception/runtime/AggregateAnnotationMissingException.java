@@ -1,13 +1,15 @@
 package com.aixoft.escassandra.exception.runtime;
 
+import com.aixoft.escassandra.annotation.AggregateData;
+
 /**
  * The type Aggregate annotation missing exception.
  * <p>
- * See {@link com.aixoft.escassandra.annotation.Aggregate}
+ * See {@link AggregateData}
  */
 public class AggregateAnnotationMissingException extends RuntimeException {
     /**
-     * Instantiates a new Aggregate annotation missing exception.
+     * Instantiates a exception indicating missing aggregate annotation.
      *
      * @param message Exception message.
      */

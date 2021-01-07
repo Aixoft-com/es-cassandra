@@ -1,7 +1,7 @@
 package com.aixoft.escassandra.benchmark.test.repository;
 
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.benchmark.model.AggregateMock;
+import com.aixoft.escassandra.benchmark.model.AggregateDataMock;
 import com.aixoft.escassandra.benchmark.model.event.AggregateCreated;
 import com.aixoft.escassandra.benchmark.model.event.NameChanged;
 import com.aixoft.escassandra.benchmark.runner.BenchmarkWithContext;
@@ -42,15 +42,15 @@ public class Find1000EventDescriptorsBenchmark extends BenchmarkWithContext {
 
         eventDescriptors.add(new EventDescriptor(eventVersion, new AggregateCreated("name")));
         for(int it = 1; it < NUMBER_OF_EVENTS_IN_BATCH; it++) {
-            eventVersion = eventVersion.getNext(true);
+            eventVersion = eventVersion.getNextMinor();
             eventDescriptors.add(new EventDescriptor(eventVersion, new NameChanged("Name_" + it)));
         }
 
-        cassandraEventDescriptorRepository.insertAll(AggregateMock.class, uuid, eventDescriptors);
+        cassandraEventDescriptorRepository.insertAll(AggregateDataMock.class, uuid, eventDescriptors);
     }
 
     @Benchmark
     public void find1000EventDescriptors(){
-        cassandraEventDescriptorRepository.findAllByAggregateId(AggregateMock.class, uuid);
+        cassandraEventDescriptorRepository.findAllByAggregateId(AggregateDataMock.class, uuid);
     }
 }

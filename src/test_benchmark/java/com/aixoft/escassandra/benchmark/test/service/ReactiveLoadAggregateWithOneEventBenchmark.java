@@ -1,8 +1,9 @@
 package com.aixoft.escassandra.benchmark.test.service;
 
+import com.aixoft.escassandra.aggregate.Aggregate;
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.benchmark.model.AggregateMock;
-import com.aixoft.escassandra.benchmark.model.event.AggregateCreated;
+import com.aixoft.escassandra.benchmark.model.AggregateDataMock;
+import com.aixoft.escassandra.benchmark.model.command.ChangeNameCommand;
 import com.aixoft.escassandra.benchmark.runner.BenchmarkWithContext;
 import com.aixoft.escassandra.service.impl.ReactiveCassandraAggregateStore;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -31,16 +32,16 @@ public class ReactiveLoadAggregateWithOneEventBenchmark extends BenchmarkWithCon
 
     @Setup
     public void setup() {
-        AggregateMock aggregateMock = new AggregateMock(uuid);
-        aggregateMock.publishEvent(new AggregateCreated("name"));
+        Aggregate<AggregateDataMock> aggregate = Aggregate.create(uuid);
+        aggregate.handleCommand(new ChangeNameCommand("name"));
 
-        cassandraAggregateStore.save(aggregateMock)
+        cassandraAggregateStore.save(aggregate)
             .block();
     }
 
     @Benchmark
     public void loadAggregateWithOneEvent(){
-        cassandraAggregateStore.loadById(uuid, AggregateMock.class)
+        cassandraAggregateStore.loadById(uuid, AggregateDataMock.class)
             .block();
     }
 }

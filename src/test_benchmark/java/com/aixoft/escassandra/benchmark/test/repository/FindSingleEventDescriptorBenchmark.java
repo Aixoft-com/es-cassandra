@@ -1,8 +1,8 @@
 package com.aixoft.escassandra.benchmark.test.repository;
 
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.benchmark.model.AggregateMock;
-import com.aixoft.escassandra.benchmark.model.event.AggregateCreated;
+import com.aixoft.escassandra.benchmark.model.AggregateDataMock;
+import com.aixoft.escassandra.benchmark.model.event.NameChanged;
 import com.aixoft.escassandra.benchmark.runner.BenchmarkWithContext;
 import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.repository.impl.CassandraEventDescriptorRepository;
@@ -32,13 +32,13 @@ public class FindSingleEventDescriptorBenchmark extends BenchmarkWithContext {
     @Setup
     public void setup() {
         cassandraEventDescriptorRepository.insertAll(
-            AggregateMock.class,
+            AggregateDataMock.class,
             uuid,
-            List.of(new EventDescriptor(new EventVersion(0, 1), new AggregateCreated("userName"))));
+            List.of(new EventDescriptor(new EventVersion(0, 1), new NameChanged("userName"))));
     }
 
     @Benchmark
     public void findSingleEventDescriptor(){
-        cassandraEventDescriptorRepository.findAllByAggregateId(AggregateMock.class, uuid);
+        cassandraEventDescriptorRepository.findAllByAggregateId(AggregateDataMock.class, uuid);
     }
 }

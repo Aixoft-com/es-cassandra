@@ -5,5 +5,7 @@ package com.aixoft.escassandra.model;
  * <p>
  * Each event shall be annotated with {@link com.aixoft.escassandra.annotation.DomainEvent} for autoconfiguration.
  */
-public interface Event {
+public interface Event<T> {
+
+    AggregateUpdater<T> createUpdater();
 }

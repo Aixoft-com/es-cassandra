@@ -1,6 +1,5 @@
 package com.aixoft.escassandra.repository.impl;
 
-import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.PreparedStatements;
 import com.aixoft.escassandra.exception.runtime.AggregateStatementNotFoundException;
 import com.aixoft.escassandra.repository.StatementBinder;
@@ -30,18 +29,18 @@ public class StatementBinderComponent implements StatementBinder {
      * <p>
      * If number of events is greater then one then batch statement will be created.
      *
-     * @param aggregateClass    Aggregate class.
-     * @param aggregateId       UUID of aggregate for which EventDescriptors will be inserted.
-     * @param eventDescriptors  EventDescriptors to be inserted.
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate for which EventDescriptors will be inserted.
+     * @param eventDescriptors      EventDescriptors to be inserted.
      *
      * @return Bound statement.
      */
     @Override
-    public Statement bindInsertEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, @NonNull List<EventDescriptor> eventDescriptors) {
-        PreparedStatement preparedStatement = preparedStatements.getInsertPreparedStatement(aggregateClass);
+    public Statement bindInsertEventDescriptors(@NonNull Class<?> aggregateDataClass, @NonNull UUID aggregateId, @NonNull List<EventDescriptor> eventDescriptors) {
+        PreparedStatement preparedStatement = preparedStatements.getInsertPreparedStatement(aggregateDataClass);
 
         if(preparedStatement == null) {
-            throw new AggregateStatementNotFoundException(String.format("Statement not found for %s, it might not be included in scanned package", aggregateClass));
+            throw new AggregateStatementNotFoundException(String.format("Statement not found for %s, it might not be included in scanned package", aggregateDataClass));
         }
 
         Statement<? extends Statement>  insertStatement;
@@ -68,16 +67,16 @@ public class StatementBinderComponent implements StatementBinder {
     }
 
     /**
-     * Bind statement to select all events for given aggregate.
+     * Bind statement to select all events for given aggregate data.
      *
-     * @param aggregateClass    Aggregate class.
-     * @param aggregateId       UUID of aggregate.
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate.
      *
      * @return Bound statement.
      */
     @Override
-    public BoundStatement  bindFindAllEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId) {
-        PreparedStatement preparedStatement = preparedStatements.getSelectAllPreparedStatement(aggregateClass);
+    public BoundStatement  bindFindAllEventDescriptors(@NonNull Class<?> aggregateDataClass, @NonNull UUID aggregateId) {
+        PreparedStatement preparedStatement = preparedStatements.getSelectAllPreparedStatement(aggregateDataClass);
 
         return preparedStatement.bind(aggregateId);
     }
@@ -85,15 +84,15 @@ public class StatementBinderComponent implements StatementBinder {
     /**
      * Bind statement to select all events with major version greater then provided for given aggregate type.
      *
-     * @param aggregateClass    Aggregate class.
-     * @param aggregateId       UUID of aggregate.
-     * @param snapshotVersion   Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate.
+     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
      *
      * @return Bound statement.
      */
     @Override
-    public BoundStatement bindFindAllSinceLastSnapshotEventDescriptors(@NonNull Class<? extends AggregateRoot> aggregateClass, @NonNull UUID aggregateId, int snapshotVersion) {
-        PreparedStatement preparedStatement = preparedStatements.getSelectAllSinceSnapshotPreparedStatement(aggregateClass);
+    public BoundStatement bindFindAllSinceLastSnapshotEventDescriptors(@NonNull Class<?> aggregateDataClass, @NonNull UUID aggregateId, int snapshotVersion) {
+        PreparedStatement preparedStatement = preparedStatements.getSelectAllSinceSnapshotPreparedStatement(aggregateDataClass);
 
         return preparedStatement.bind(aggregateId, snapshotVersion);
     }

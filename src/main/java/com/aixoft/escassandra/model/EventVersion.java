@@ -19,17 +19,23 @@ public class EventVersion {
     int minor;
 
     /**
-     * Gets next event version.
-     * Non-snapshot event results in minor version increment only.
-     * Snapshot event results in major version increment and minor version reset.
+     * Gets next minor event version.
+     * Shall be used for non-snapshot events and results in minor version increment only.
      *
-     * @param isSnapshot Specify if next version shall be created for snapshot event.
-     *
-     * @return Next event version.
+     * @return event version with minor version incremented.
      */
-    public EventVersion getNext(boolean isSnapshot) {
-        return isSnapshot ? new EventVersion(major + 1, 0)
-            : new EventVersion(major, minor + 1);
+    public EventVersion getNextMinor() {
+        return new EventVersion(major, minor + 1);
+    }
+
+    /**
+     * Gets next event version.
+     * Shall be used for snapshot events and results in major version increment and minor version reset.
+     *
+     * @return event version with major version incremented and minor version reset.
+     */
+    public EventVersion getNextMajor() {
+        return new EventVersion(major + 1, 0);
     }
 
     /**

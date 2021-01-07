@@ -1,8 +1,7 @@
 package com.aixoft.escassandra.benchmark.test.repository;
 
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
-import com.aixoft.escassandra.benchmark.model.AggregateMock;
-import com.aixoft.escassandra.benchmark.model.event.AggregateCreated;
+import com.aixoft.escassandra.benchmark.model.AggregateDataMock;
 import com.aixoft.escassandra.benchmark.model.event.NameChanged;
 import com.aixoft.escassandra.benchmark.runner.BenchmarkWithContext;
 import com.aixoft.escassandra.model.EventVersion;
@@ -37,20 +36,19 @@ public class ReactiveInsert1000EventDescriptorsBenchmark extends BenchmarkWithCo
     public void setup() {
         EventVersion eventVersion = EventVersion.initial();
 
-        eventDescriptors.add(new EventDescriptor(eventVersion, new AggregateCreated("name")));
-        for(int it = 1; it < NUMBER_OF_EVENTS_IN_BATCH; it++) {
-            eventVersion = eventVersion.getNext(true);
+        for(int it = 0; it < NUMBER_OF_EVENTS_IN_BATCH; it++) {
             eventDescriptors.add(new EventDescriptor(eventVersion, new NameChanged("Name_" + it)));
+            eventVersion = eventVersion.getNextMinor();
         }
     }
 
     @Benchmark
     public void insertEventDescriptors(){
-        repository.insertAll(AggregateMock.class,
+        repository.insertAll(AggregateDataMock.class,
             Uuids.timeBased(),
             eventDescriptors
             )
-        .block();
+        .blockLast();
     }
 
 }

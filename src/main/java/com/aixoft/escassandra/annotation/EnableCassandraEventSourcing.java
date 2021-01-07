@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 
 /**
  * Autoconfigure EsCassandra application.
- * Specifies packages scanned for aggregates and events.
+ * Specifies packages scanned for aggregates' data and events.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -27,10 +27,9 @@ import java.lang.annotation.Target;
 @Configuration
 public @interface EnableCassandraEventSourcing {
     /**
-     * List of packages scanned for classes which extend {@link com.aixoft.escassandra.aggregate.AggregateRoot}
-     * and annotated with {@link com.aixoft.escassandra.annotation.Aggregate}.
+     * List of packages scanned for aggregate data classes annotated with {@link AggregateData}.
      *
-     * @return Aggregate packages to be scanned.
+     * @return Aggregate data packages to be scanned.
      */
     String[] aggregatePackages() default {};
 

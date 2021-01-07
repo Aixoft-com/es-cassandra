@@ -1,12 +1,15 @@
 package com.aixoft.escassandra.service.impl;
 
+import com.aixoft.escassandra.aggregate.Aggregate;
 import com.aixoft.escassandra.annotation.EnableCassandraEventSourcing;
 import com.aixoft.escassandra.config.TestEsCassandraConfiguration;
-import com.aixoft.escassandra.exception.checked.AggregateFailedSaveException;
 import com.aixoft.escassandra.exception.checked.AggregateNotFoundException;
-import com.aixoft.escassandra.service.impl.model.AggregateMock;
 import com.aixoft.escassandra.model.EventVersion;
 import com.aixoft.escassandra.repository.impl.ReactiveCassandraEventDescriptorRepository;
+import com.aixoft.escassandra.service.impl.model.AggregateDataMock;
+import com.aixoft.escassandra.service.impl.model.command.AddPointsCommand;
+import com.aixoft.escassandra.service.impl.model.command.CreateCommand;
+import com.aixoft.escassandra.service.impl.model.command.CreateSnapshotCommand;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +21,7 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
@@ -33,13 +35,36 @@ class ReactiveCassandraAggregateStoreIT {
     private ReactiveCassandraEventDescriptorRepository reactiveCassandraEventDescriptorRepository;
 
     @Test
-    void save_AggregateWithNoEvent_ReturnsAggregateFailedSaveException() {
+    void save_NoEventsAfterFirstSave_ReturnsEmptyOnSecondSave() {
         UUID uuid = UUID.fromString("62853cd0-1888-11eb-be70-e792c04e0001");
 
-        AggregateMock aggregateMock = new AggregateMock(uuid);
+        Aggregate<AggregateDataMock> aggregate = Aggregate.create(uuid);
+        aggregate.handleCommand(new CreateCommand("name"));
 
-        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregateMock))
-            .verifyError(AggregateFailedSaveException.class);
+        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregate))
+            .expectNext()
+            .expectComplete();
+
+        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregate))
+            .expectComplete();
+    }
+
+    @Test
+    void save_AggregateWithNoDataAndNoInitializingEvent_ReturnsAggregateWithNoDataException() {
+        UUID uuid = UUID.fromString("62853cd0-1888-11eb-be70-e792c04e0001");
+
+        Aggregate<AggregateDataMock> aggregate = Aggregate.create(uuid);
+        aggregate.handleCommand(new CreateCommand("name"));
+
+        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregate))
+            .assertNext(aggregateResult -> {
+                assertTrue(aggregateResult.getUncommittedEvents().isEmpty());
+                assertEquals(new EventVersion(0,1), aggregateResult.getCommittedVersion());
+                assertEquals(new EventVersion(0,1), aggregateResult.getCurrentVersion());
+                assertEquals("name", aggregateResult.getData().getUserName());
+                assertEquals(uuid, aggregateResult.getId());
+            })
+            .verifyComplete();
     }
 
     @Test
@@ -48,33 +73,33 @@ class ReactiveCassandraAggregateStoreIT {
         String userName = "user";
         int points = 100;
 
-        AggregateMock aggregateMock = new AggregateMock(uuid);
-        aggregateMock.initialize(userName);
-        aggregateMock.addPoints(points);
+        Aggregate<AggregateDataMock> aggregate = Aggregate.create(uuid);
+        aggregate.handleCommand(new CreateCommand(userName));
+        aggregate.handleCommand(new AddPointsCommand(points));
 
         //Assert apply methods not executed on event publish before save. Events stored in uncommitted changes.
-        assertNull(aggregateMock.getUserName());
-        assertEquals(0, aggregateMock.getPoints());
-        assertEquals(2, aggregateMock.getUncommittedEvents().size());
+        assertNull(aggregate.getData());
+        assertEquals(2, aggregate.getUncommittedEvents().size());
 
-        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregateMock))
-            .expectNextCount(1)
+        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregate))
+            .assertNext( aggregateResult -> {
+                assertEquals(userName, aggregateResult.getData().getUserName());
+                assertEquals(points, aggregateResult.getData().getPoints());
+                assertTrue(aggregateResult.getUncommittedEvents().isEmpty());
+                assertEquals(new EventVersion(0,2), aggregateResult.getCommittedVersion());
+                assertEquals(new EventVersion(0,2), aggregateResult.getCurrentVersion());
+            })
             .verifyComplete();
-
-        //Assert apply methods executed on save resulting in aggregate update. No uncommitted changes after save.
-        assertEquals(userName, aggregateMock.getUserName());
-        assertEquals(points, aggregateMock.getPoints());
-        assertEquals(0, aggregateMock.getUncommittedEvents().size());
     }
 
     @Test
     void loadById_AggregateWithGivenIdIsNotPersisted_ReturnsAggregateNotFoundException() {
         UUID uuid = UUID.fromString("62853cd0-1888-11eb-be70-e792c04e0003");
 
-        StepVerifier.create(reactiveCassandraAggregateStore.loadById(uuid, AggregateMock.class))
+        StepVerifier.create(reactiveCassandraAggregateStore.loadById(uuid, AggregateDataMock.class))
             .verifyError(AggregateNotFoundException.class);
 
-        verify(reactiveCassandraEventDescriptorRepository).findAllByAggregateId(AggregateMock.class, uuid);
+        verify(reactiveCassandraEventDescriptorRepository).findAllByAggregateId(AggregateDataMock.class, uuid);
     }
 
 
@@ -84,50 +109,52 @@ class ReactiveCassandraAggregateStoreIT {
         String userName = "user";
         int points = 100;
 
-        AggregateMock aggregateMock = new AggregateMock(uuid);
-        aggregateMock.initialize(userName);
-        aggregateMock.addPoints(points);
+        Aggregate<AggregateDataMock> aggregate = Aggregate.create(uuid);
+        aggregate.handleCommand(new CreateCommand(userName));
+        aggregate.handleCommand(new AddPointsCommand(points));
 
-        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregateMock))
+        StepVerifier.create(reactiveCassandraAggregateStore.save(aggregate))
             .expectNextCount(1)
             .verifyComplete();
 
-        StepVerifier.create(reactiveCassandraAggregateStore.loadById(uuid, AggregateMock.class))
+        StepVerifier.create(reactiveCassandraAggregateStore.loadById(uuid, AggregateDataMock.class))
             .assertNext( restoredAggregate -> {
                 assertEquals(new EventVersion(0, 2), restoredAggregate.getCommittedVersion());
-                assertEquals(userName, restoredAggregate.getUserName());
-                assertEquals(points, restoredAggregate.getPoints());
-                assertEquals(0, aggregateMock.getUncommittedEvents().size());
+                assertEquals(userName, restoredAggregate.getData().getUserName());
+                assertEquals(points, restoredAggregate.getData().getPoints());
+                assertEquals(0, restoredAggregate.getUncommittedEvents().size());
             })
             .verifyComplete();
 
-        verify(reactiveCassandraEventDescriptorRepository).findAllByAggregateId(AggregateMock.class, uuid);
+        verify(reactiveCassandraEventDescriptorRepository).findAllByAggregateId(AggregateDataMock.class, uuid);
     }
 
     @Test
     void loadByIdWithSnapshot_SnapshotCreated_AggregateRestoredFromAllEventsSinceSnapshot() {
         UUID uuid = UUID.fromString("62853cd0-1888-11eb-be70-e792c04e0004");
 
+        Aggregate<AggregateDataMock> aggregateObj = Aggregate.create(uuid);
+
         StepVerifier.create(
-            Mono.just(new AggregateMock(uuid))
-                .doOnNext(aggregateMock -> aggregateMock.initialize("user1"))
-                .doOnNext(aggregateMock -> aggregateMock.addPoints(100))
-                .doOnNext(aggregateMock -> aggregateMock.createSnapshot("user2", 200))
-                .doOnNext(aggregateMock -> aggregateMock.addPoints(50))
+            Mono.just(aggregateObj)
+                .doOnNext(aggregate -> aggregate.handleCommand(new CreateCommand("user1")))
+                .doOnNext(aggregate -> aggregate.handleCommand(new AddPointsCommand(100)))
+                .doOnNext(aggregate -> aggregate.handleSnapshotCommand(new CreateSnapshotCommand("user2", 200)))
+                .doOnNext(aggregate -> aggregate.handleCommand(new AddPointsCommand(50)))
                 .flatMap(reactiveCassandraAggregateStore::save)
         )
             .expectNextCount(1)
             .verifyComplete();
 
-        StepVerifier.create(reactiveCassandraAggregateStore.loadById(uuid, 1, AggregateMock.class))
+        StepVerifier.create(reactiveCassandraAggregateStore.loadById(uuid, 1, AggregateDataMock.class))
             .assertNext( restoredAggregate -> {
                 assertEquals(new EventVersion(1, 1), restoredAggregate.getCommittedVersion());
-                assertEquals("user2", restoredAggregate.getUserName());
-                assertEquals(250, restoredAggregate.getPoints());
+                assertEquals("user2", restoredAggregate.getData().getUserName());
+                assertEquals(250, restoredAggregate.getData().getPoints());
                 assertEquals(0, restoredAggregate.getUncommittedEvents().size());
             })
             .verifyComplete();
 
-        verify(reactiveCassandraEventDescriptorRepository).findAllByAggregateIdSinceSnapshot(AggregateMock.class, uuid, 1);
+        verify(reactiveCassandraEventDescriptorRepository).findAllByAggregateIdSinceSnapshot(AggregateDataMock.class, uuid, 1);
     }
 }

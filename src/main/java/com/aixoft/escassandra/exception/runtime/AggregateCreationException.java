@@ -5,7 +5,7 @@ package com.aixoft.escassandra.exception.runtime;
  */
 public class AggregateCreationException extends RuntimeException {
     /**
-     * Instantiates a new Aggregate creation exception.
+     * Instantiates a exception indicating aggregate creation failure.
      *
      * @param message   Exception message.
      * @param cause     Exception cause.

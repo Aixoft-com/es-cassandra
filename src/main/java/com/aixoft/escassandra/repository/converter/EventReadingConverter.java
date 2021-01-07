@@ -36,6 +36,7 @@ public class EventReadingConverter implements Converter<String, Event> {
         String eventName = rootNode.at("/event").asText();
 
         JsonNode data = rootNode.at("/data");
+
         return objectMapper.readValue(data.traverse(), domainEventsConfiguration.getEventClassByName(eventName));
     }
 }

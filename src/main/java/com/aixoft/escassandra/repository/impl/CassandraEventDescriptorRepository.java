@@ -1,6 +1,5 @@
 package com.aixoft.escassandra.repository.impl;
 
-import com.aixoft.escassandra.aggregate.AggregateRoot;
 import com.aixoft.escassandra.component.CassandraSession;
 import com.aixoft.escassandra.repository.EventDescriptorRepository;
 import com.aixoft.escassandra.repository.StatementBinder;
@@ -48,51 +47,53 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
      * If any event with same version is is already persisted in the database then operation will fail and no element
      * will be stored.
      *
-     * @param aggregateClass    Aggregate class.
-     * @param aggregateId       UUID of aggregate for which EventDescriptors will be inserted.
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate for which EventDescriptors will be inserted.
      *
      * @param eventDescriptors  EventDescriptors to be inserted.
      * @return true if insert was successful or false otherwise.
      */
     @Override
-    public boolean insertAll(@NonNull Class<? extends AggregateRoot> aggregateClass,
+    public List<EventDescriptor> insertAll(@NonNull Class<?> aggregateDataClass,
                           @NonNull UUID aggregateId,
                           @NonNull List<EventDescriptor> eventDescriptors) {
-        return session.execute(statementBinder.bindInsertEventDescriptors(aggregateClass, aggregateId, eventDescriptors))
-            .wasApplied();
+        return session.execute(statementBinder.bindInsertEventDescriptors(aggregateDataClass, aggregateId, eventDescriptors))
+            .wasApplied() ? eventDescriptors : List.of();
     }
 
     /**
-     * Find all event descriptors for aggregate of given type and id.
+     * Find all event descriptors for aggregate of given data type and id.
      *
-     * @param aggregateClass    Aggregate class.
-     * @param aggregateId       UUID of aggregate.
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate.
      *
      * @return List of event descriptors.
      */
     @Override
-    public List<EventDescriptor> findAllByAggregateId(@NonNull Class<? extends AggregateRoot> aggregateClass,
+    public List<EventDescriptor> findAllByAggregateId(@NonNull Class<?> aggregateDataClass,
                                                       @NonNull UUID aggregateId) {
         return executeFindStatement(
-            statementBinder.bindFindAllEventDescriptors(aggregateClass, aggregateId)
+            statementBinder.bindFindAllEventDescriptors(aggregateDataClass, aggregateId)
         );
     }
 
     /**
      * Find all event descriptors since given major version ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
-     * for aggregate of given type and id.
+     * for aggregate of given data type and id.
      *
-     * @param aggregateClass    Aggregate class.
-     * @param aggregateId       UUID of aggregate.
+     * @param aggregateDataClass    Aggregate data class.
+     * @param aggregateId           UUID of aggregate.
+     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
+     *                              from which aggregate will be restored.
      *
      * @return List of event descriptors.
      */
     @Override
-    public List<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<? extends AggregateRoot> aggregateClass,
-                                                                   @NonNull UUID aggregateId,
-                                                                   int snapshotVersion) {
+    public List<EventDescriptor> findAllByAggregateIdSinceSnapshot(@NonNull Class<?> aggregateDataClass,
+                                                                          @NonNull UUID aggregateId,
+                                                                          int snapshotVersion) {
         return executeFindStatement(
-            statementBinder.bindFindAllSinceLastSnapshotEventDescriptors(aggregateClass, aggregateId, snapshotVersion)
+            statementBinder.bindFindAllSinceLastSnapshotEventDescriptors(aggregateDataClass, aggregateId, snapshotVersion)
         );
     }
 
