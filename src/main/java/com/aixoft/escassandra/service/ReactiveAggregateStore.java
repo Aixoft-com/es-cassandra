@@ -21,7 +21,7 @@ public interface ReactiveAggregateStore {
      *     2. If event applied successfully then events are persisted in cassandra database.
      * <p>
      *     3. If no event conflict on data persist,
-     *     then events are published to subscribed {@link com.aixoft.escassandra.service.EventListener}
+     *     then events are published to subscribed {@link com.aixoft.escassandra.annotation.EventListener}
      *     (See {@link com.aixoft.escassandra.annotation.SubscribeAll}).
      * <p>
      *
