@@ -5,10 +5,12 @@ import com.aixoft.escassandra.exception.runtime.EventHandlerInvocationFailedExce
 import com.aixoft.escassandra.exception.runtime.InvalidSubscribedMethodDefinitionException;
 import com.aixoft.escassandra.model.Event;
 import com.aixoft.escassandra.model.EventVersion;
-import com.aixoft.escassandra.service.EventListener;
 import com.aixoft.escassandra.service.EventRouter;
+import lombok.AccessLevel;
 import lombok.NonNull;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -18,8 +20,18 @@ import java.util.stream.Collectors;
  * EventRouter is used to register listener ({@link EventListener}) and handle events when published.
  */
 @Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AutoconfiguredEventRouter implements EventRouter {
-    private final Map<Class<?>, Map<EventListener, Method>> eventHandlerMethodByEventClass = new HashMap<>();
+    Map<Class<?>, Map<Object, Method>> eventHandlerMethodByEventClass = new HashMap<>();
+
+    /**
+     * Returns from App Context all ({@link com.aixoft.escassandra.annotation.EventListener}) and register them
+     *
+     * @param context ApplicationContext
+     */
+    public AutoconfiguredEventRouter(ApplicationContext context) {
+        context.getBeansWithAnnotation(com.aixoft.escassandra.annotation.EventListener.class).values().forEach(this::registerEventHandler);
+    }
 
     /**
      * Register methods annotated with {@link SubscribeAll} and defined in given {@link EventListener} instance.
@@ -33,8 +45,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
      *
      * @throws InvalidSubscribedMethodDefinitionException If definition of subscribed method is invalid.
      */
-    @Override
-    public void registerEventHandler(@NonNull EventListener eventListener) {
+    private void registerEventHandler(@NonNull Object eventListener) {
         List<Method> methods = Arrays.stream(eventListener.getClass().getDeclaredMethods())
             .filter(method -> method.isAnnotationPresent(SubscribeAll.class))
             .collect(Collectors.toList());
@@ -71,9 +82,9 @@ public class AutoconfiguredEventRouter implements EventRouter {
                 );
             }
 
-            Map<EventListener, Method> eventHandlerMethod = eventHandlerMethodByEventClass.get(eventParameterType);
+            Map<Object, Method> eventHandlerMethod = eventHandlerMethodByEventClass.get(eventParameterType);
             if (eventHandlerMethod == null) {
-                Map<EventListener, Method> newEventHandlerMethod = new HashMap<>();
+                Map<Object, Method> newEventHandlerMethod = new HashMap<>();
                 newEventHandlerMethod.put(eventListener, method);
 
                 eventHandlerMethodByEventClass.put(eventParameterType, newEventHandlerMethod);
@@ -89,7 +100,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
         }
     }
 
-    private String getExceptionMessage(Method method, EventListener eventListener, String parameterNumber, String className) {
+    private String getExceptionMessage(Method method, Object eventListener, String parameterNumber, String className) {
         return String.format("Method '%s' in class '%s' annotated with '%s' has %s parameter which in not subtype of '%s'",
             method.getName(),
             eventListener.getClass().getName(),
@@ -107,7 +118,7 @@ public class AutoconfiguredEventRouter implements EventRouter {
      */
     @Override
     public <T> void publish(Event<T> event, EventVersion version, UUID aggregateId) {
-        Map<EventListener, Method> methodByEventHandler = eventHandlerMethodByEventClass.get(event.getClass());
+        Map<Object, Method> methodByEventHandler = eventHandlerMethodByEventClass.get(event.getClass());
 
         if (methodByEventHandler != null) {
             methodByEventHandler.forEach((eventHandler, method) -> {
