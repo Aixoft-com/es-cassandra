@@ -84,10 +84,9 @@ public class StatementBinderComponent implements StatementBinder {
     /**
      * Bind statement to select all events with major version greater then provided for given aggregate type.
      *
-     * @param aggregateDataClass    Aggregate data class.
-     * @param aggregateId           UUID of aggregate.
-     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
-     *
+     * @param aggregateDataClass Aggregate data class.
+     * @param aggregateId        UUID of aggregate.
+     * @param snapshotVersion    Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
      * @return Bound statement.
      */
     @Override

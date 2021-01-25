@@ -43,11 +43,10 @@ public interface ReactiveEventDescriptorRepository {
      * Creates Flux for finding all event descriptors since given major version (snapshot number)
      * for aggregate of given data type and id.
      *
-     * @param aggregateDataClass    Aggregate class.
-     * @param aggregateId           UUID of aggregate.
-     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
-     *                              from which aggregate will be restored.
-     *
+     * @param aggregateDataClass Aggregate class.
+     * @param aggregateId        UUID of aggregate.
+     * @param snapshotVersion    Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
+     *                           from which aggregate will be restored.
      * @return Flux from event descriptors.
      */
     Flux<EventDescriptor> findAllByAggregateIdSinceSnapshot(Class<?> aggregateDataClass,

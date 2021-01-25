@@ -78,14 +78,13 @@ public class CassandraEventDescriptorRepository implements EventDescriptorReposi
     }
 
     /**
-     * Find all event descriptors since given major version ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
+     * Find all event descriptors since given major version ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
      * for aggregate of given data type and id.
      *
-     * @param aggregateDataClass    Aggregate data class.
-     * @param aggregateId           UUID of aggregate.
-     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
-     *                              from which aggregate will be restored.
-     *
+     * @param aggregateDataClass Aggregate data class.
+     * @param aggregateId        UUID of aggregate.
+     * @param snapshotVersion    Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
+     *                           from which aggregate will be restored.
      * @return List of event descriptors.
      */
     @Override

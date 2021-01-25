@@ -81,11 +81,11 @@ public class ReactiveCassandraEventDescriptorRepository implements ReactiveEvent
     /**
      * Creates Flux for finding all event descriptors since given major version (snapshot number)
      * for aggregate of given type and id.
-     * @param aggregateDataClass    Aggregate data class.
-     * @param aggregateId           UUID of aggregate.
-     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()})
-     *                              from which aggregate will be restored.
      *
+     * @param aggregateDataClass Aggregate data class.
+     * @param aggregateId        UUID of aggregate.
+     * @param snapshotVersion    Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
+     *                           from which aggregate will be restored.
      * @return Flux from event descriptors.
      */
     @Override

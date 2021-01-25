@@ -63,7 +63,7 @@ public interface AggregateStore {
      *
      * @param <T>                   Aggregate data type.
      * @param aggregateId           UUID of the aggregate.
-     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
+     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
      * @param aggregateDataClass    Aggregate data class.
      *
      * @return Restored aggregate or empty if aggregate not found.

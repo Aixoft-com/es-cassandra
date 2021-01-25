@@ -95,18 +95,17 @@ public class CassandraAggregateStore implements AggregateStore {
 
     /**
      * Restores aggregate from events using event sourcing.
-     *
+     * <p>
      * All events stored in database since given {@code snapshotVersion} are used to restore aggregate.
-     *
+     * <p>
      * Effective if snapshots are being used.
-     *
+     * <p>
      * Committed and current version of the aggregate will be equal last event version (See {@link AggregateRoot#getCommittedVersion()}).
      *
-     * @param aggregateId           UUID of the aggregate.
-     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
-     * @param aggregateDataClass    Aggregate data class.
-     * @param <T>                   Aggregate data type.
-     *
+     * @param aggregateId        UUID of the aggregate.
+     * @param snapshotVersion    Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
+     * @param aggregateDataClass Aggregate data class.
+     * @param <T>                Aggregate data type.
      * @return Restored aggregate or empty if aggregate not found.
      */
     @Override

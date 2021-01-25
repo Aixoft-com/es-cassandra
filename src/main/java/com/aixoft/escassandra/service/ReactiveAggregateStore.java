@@ -65,7 +65,7 @@ public interface ReactiveAggregateStore {
      *
      * @param <T>                   Aggregate type.
      * @param aggregateId           UUID of the aggregate.
-     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
+     * @param snapshotVersion       Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
      * @param aggregateDataClass    Aggregate data class.
      *
      * @return Mono from restored aggregate or Mono.error({@link AggregateNotFoundException}) otherwise.

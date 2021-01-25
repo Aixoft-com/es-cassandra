@@ -40,8 +40,7 @@ public interface StatementBinder {
      *
      * @param aggregateClass  Aggregate data class.
      * @param aggregateId     UUID of aggregate.
-     * @param snapshotVersion Major version of the event ({@link com.aixoft.escassandra.model.EventVersion#getMajor()}).
-     *
+     * @param snapshotVersion Major version of the event ({@link com.aixoft.escassandra.model.EventVersion}#getMajor()).
      * @return Bound statement.
      */
     BoundStatement bindFindAllSinceLastSnapshotEventDescriptors(Class<?> aggregateClass, UUID aggregateId, int snapshotVersion);
