@@ -13,7 +13,54 @@
     <artifactId>escassandra</artifactId>
     <version>0.3-SNAPSHOT</version>
     <name>escassandra</name>
+    <packaging>jar</packaging>
     <description>Event Sourcing library for cassandra</description>
+    <url>https://bitbucket.org/aixoft/es-cassandra</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Piotr Stój</name>
+            <email>piotr.stoj@aixoft.com</email>
+            <organization>Aixoft</organization>
+            <organizationUrl>https://aixoft.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Krystian Majewski</name>
+            <email>krystian.majewski@aixoft.com</email>
+            <organization>Aixoft</organization>
+            <organizationUrl>https://aixoft.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Tomasz Bawor</name>
+            <email>tomasz.bawor@aixoft.com</email>
+            <organization>Aixoft</organization>
+            <organizationUrl>https://aixoft.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git//bitbucket.org:aixoft/es-cassandra.git</connection>
+        <developerConnection>scm:git:ssh//bitbucket.org:aixoft/es-cassandra.git</developerConnection>
+        <url>https://bitbucket.org/aixoft/es-cassandra/src/</url>
+    </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <java.version>14</java.version>
