@@ -6,7 +6,10 @@ import com.aixoft.escassandra.model.SnapshotEvent;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import lombok.NonNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Base class for each aggregate.
@@ -14,9 +17,9 @@ import java.util.*;
  * @param <T> Aggregate data type parameter.
  */
 public abstract class AggregateRoot<T> {
+    private final UUID id;
     private EventVersion committedVersion;
     private EventVersion currentVersion;
-    private final UUID id;
     private final LinkedList<EventDescriptor> changes = new LinkedList<>();
 
     /**
@@ -133,9 +136,11 @@ public abstract class AggregateRoot<T> {
 
     @Override
     public String toString() {
-        return "AggregateRoot{" +
-            "committedVersion=" + committedVersion +
-            ", id=" + id +
-            '}';
+        return this.getClass().getName()
+            +"(id=" + id
+            + ", committedVersion=" + committedVersion
+            + ", currentVersion=" + currentVersion
+            + ", changes=" + this.changes
+            + ")";
     }
 }
