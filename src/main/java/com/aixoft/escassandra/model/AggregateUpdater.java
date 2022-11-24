@@ -5,6 +5,7 @@ package com.aixoft.escassandra.model;
  *
  * @param <T> the type of aggregate data.
  */
+@FunctionalInterface
 public interface AggregateUpdater<T> {
 
     /**

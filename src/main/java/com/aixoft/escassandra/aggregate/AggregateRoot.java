@@ -6,10 +6,7 @@ import com.aixoft.escassandra.model.SnapshotEvent;
 import com.aixoft.escassandra.repository.model.EventDescriptor;
 import lombok.NonNull;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Base class for each aggregate.
@@ -38,7 +35,7 @@ public abstract class AggregateRoot<T> {
      *
      * @param events the event list.
      */
-    protected void publish(@NonNull List<Event<T>> events) {
+    protected void publish(@NonNull Iterable<Event<T>> events) {
         for(Event<T> event: events) {
             currentVersion = currentVersion.getNextMinor();
             changes.add(new EventDescriptor(currentVersion, event));

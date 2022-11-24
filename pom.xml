@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.6.4</version>
+        <version>2.7.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -64,19 +64,19 @@
 
     <properties>
         <java.version>17</java.version>
-        <jmh.version>1.26</jmh.version>
+        <jmh.version>1.36</jmh.version>
 
         <project.testresult.directory>${project.build.directory}/test-results</project.testresult.directory>
         <properties-maven-plugin.version>1.0.0</properties-maven-plugin.version>
-        <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
         <jacoco.utReportDirectory>${project.build.directory}/jacoco/test</jacoco.utReportDirectory>
         <jacoco.utReportFile>${jacoco.utReportDirectory}/test.exec</jacoco.utReportFile>
         <jacoco.itReportDirectory>${project.build.directory}/jacoco/integrationTest</jacoco.itReportDirectory>
         <jacoco.itReportFile>${jacoco.itReportDirectory}/integrationTest.exec</jacoco.itReportFile>
         <junit.utReportDirectory>${project.testresult.directory}/test</junit.utReportDirectory>
         <junit.itReportDirectory>${project.testresult.directory}/integrationTest</junit.itReportDirectory>
-        <projectlombok.version>1.18.22</projectlombok.version>
+        <projectlombok.version>1.18.24</projectlombok.version>
     </properties>
 
     <dependencies>
@@ -92,21 +92,20 @@
         </dependency>
 
         <dependency>
-            <groupId>jakarta.validation</groupId>
-            <artifactId>jakarta.validation-api</artifactId>
-            <version>2.0.2</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
         <dependency>
             <groupId>com.datastax.oss</groupId>
             <artifactId>java-driver-core</artifactId>
-            <version>4.9.0</version>
+            <version>4.15.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.datastax.oss</groupId>
             <artifactId>native-protocol</artifactId>
-            <version>1.4.11</version>
+            <version>1.5.1</version>
         </dependency>
 
         <dependency>
