@@ -5,7 +5,6 @@ import com.aixoft.escassandra.repository.model.EventDescriptor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,9 +38,6 @@ public class Aggregate<T> extends AggregateRoot<T> {
         aggregateCopy.setCommittedVersion(this.getCurrentVersion());
         aggregateCopy.setCurrentVersion(this.getCurrentVersion());
 
-        LinkedList<EventDescriptor> eventDescriptors = this.getOriginalUncommittedEvents();
-        eventDescriptors.forEach(eventDescriptor -> aggregateCopy.update(eventDescriptor.getEvent().createUpdater()));
-
         return aggregateCopy;
     }
 
@@ -53,9 +49,11 @@ public class Aggregate<T> extends AggregateRoot<T> {
      * @param command Command to validated which triggers an event.
      */
     public void handleCommand(Command<T> command) {
-        if(command.validate(this))
-        {
-            publish(command.toEvents());
+        if (command.validate(this)) {
+            for (Event event : command.toEvents(this)) {
+                update(event.updater());
+                publish(event);
+            }
         }
     }
 
@@ -69,8 +67,7 @@ public class Aggregate<T> extends AggregateRoot<T> {
      * @param snapshotCommand Command to validated which triggers an event.
      */
     public void handleSnapshotCommand(SnapshotCommand<T> snapshotCommand) {
-        if(snapshotCommand.validate(this))
-        {
+        if (snapshotCommand.validate(this)) {
             publish(new DummyPreSnapshotEvent());
             publishSnapshot(snapshotCommand.toEvent());
         }
@@ -109,19 +106,18 @@ public class Aggregate<T> extends AggregateRoot<T> {
     /**
      * Restore aggregate base on provided events.
      *
-     * @param <T>               Aggregate data type.
-     * @param aggregateId       Aggregate UUID.
-     * @param eventDescriptors  Event descriptors.
-     *
+     * @param <T>              Aggregate data type.
+     * @param aggregateId      Aggregate UUID.
+     * @param eventDescriptors Event descriptors.
      * @return restored aggregate with given type and UUID.
      */
     public static <T> Aggregate<T> restoreFromEvents(UUID aggregateId, List<EventDescriptor> eventDescriptors) {
         Aggregate<T> aggregate = new Aggregate<>(aggregateId);
 
-        if(!eventDescriptors.isEmpty()) {
-            eventDescriptors.forEach(eventDescriptor -> aggregate.update(eventDescriptor.getEvent().createUpdater()));
+        if (!eventDescriptors.isEmpty()) {
+            eventDescriptors.forEach(eventDescriptor -> aggregate.update(eventDescriptor.getEvent().updater()));
 
-            EventVersion lastEventVersion = eventDescriptors.get(eventDescriptors.size()-1).getEventVersion();
+            EventVersion lastEventVersion = eventDescriptors.get(eventDescriptors.size() - 1).getEventVersion();
 
             aggregate.setCommittedVersion(lastEventVersion);
             aggregate.setCurrentVersion(lastEventVersion);
@@ -133,21 +129,20 @@ public class Aggregate<T> extends AggregateRoot<T> {
     /**
      * Restore aggregate base on provided events with reactive approach.
      *
-     * @param <T>               Aggregate data type.
-     * @param aggregateId       Aggregate UUID.
-     * @param eventDescriptors  Event descriptors.
-     *
+     * @param <T>              Aggregate data type.
+     * @param aggregateId      Aggregate UUID.
+     * @param eventDescriptors Event descriptors.
      * @return restored aggregate with given type and UUID.
      */
     public static <T> Mono<Aggregate<T>> restoreFromEvents(UUID aggregateId, Flux<EventDescriptor> eventDescriptors) {
         return eventDescriptors.reduceWith(() -> new Aggregate<T>(aggregateId),
-            (aggregate, eventDescriptor) -> {
-                aggregate.update(eventDescriptor.getEvent().createUpdater());
-                aggregate.setCommittedVersion(eventDescriptor.getEventVersion());
+                (aggregate, eventDescriptor) -> {
+                    aggregate.update(eventDescriptor.getEvent().updater());
+                    aggregate.setCommittedVersion(eventDescriptor.getEventVersion());
 
-                return aggregate;
-            }
-        )
-        .doOnNext(aggregate -> aggregate.setCurrentVersion(aggregate.getCommittedVersion()));
+                    return aggregate;
+                }
+            )
+            .doOnNext(aggregate -> aggregate.setCurrentVersion(aggregate.getCommittedVersion()));
     }
 }

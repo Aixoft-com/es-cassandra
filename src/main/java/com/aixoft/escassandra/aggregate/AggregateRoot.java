@@ -29,20 +29,6 @@ public abstract class AggregateRoot<T> {
     }
 
     /**
-     * Adds events to unpublished events' queue. It does not modify aggregate data connected with the event.
-     * <p>
-     * Updates aggregate's current version (See {@link EventVersion#getNextMinor()}).
-     *
-     * @param events the event list.
-     */
-    protected void publish(@NonNull Iterable<Event<T>> events) {
-        for(Event<T> event: events) {
-            currentVersion = currentVersion.getNextMinor();
-            changes.add(new EventDescriptor(currentVersion, event));
-        }
-    }
-
-    /**
      * Adds event to unpublished events' queue. It does not modify aggregate data connected with the event.
      * <p>
      * Updates aggregate's current version (See {@link EventVersion#getNextMinor()}).
@@ -120,15 +106,6 @@ public abstract class AggregateRoot<T> {
      */
     public List<EventDescriptor> getUncommittedEvents() {
         return Collections.unmodifiableList(changes);
-    }
-
-    /**
-     * Gets original list of uncommitted events.
-     *
-     * @return All events which were published for the aggregate but not committed.
-     */
-    protected LinkedList<EventDescriptor> getOriginalUncommittedEvents() {
-        return changes;
     }
 
     @Override
