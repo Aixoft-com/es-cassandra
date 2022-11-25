@@ -11,7 +11,7 @@ import com.aixoft.escassandra.annotation.DomainEvent;
 @DomainEvent(event = "BeforeSnapshotCreated")
 public class DummyPreSnapshotEvent implements Event{
     @Override
-    public AggregateUpdater<?> createUpdater() {
+    public AggregateUpdater<?> updater() {
         return obj -> obj;
     }
 }

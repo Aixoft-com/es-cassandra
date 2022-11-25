@@ -34,7 +34,7 @@ public abstract class SnapshotOnApplyEvent<T> implements SnapshotEvent<T> {
     protected abstract T restoreAggregateData();
 
     @Override
-    public AggregateUpdater<T> createUpdater() {
+    public AggregateUpdater<T> updater() {
         return obj -> {
             if(obj != null) {
                 updateEventDataOnApply(obj);

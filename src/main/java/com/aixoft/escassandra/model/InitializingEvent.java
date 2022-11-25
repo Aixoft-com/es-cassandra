@@ -21,7 +21,7 @@ public abstract class InitializingEvent<T> implements Event<T> {
      * @return aggregate updater which initialize aggregate data.
      */
     @Override
-    public AggregateUpdater<T> createUpdater() {
+    public AggregateUpdater<T> updater() {
         return obj -> initialize();
     }
 }

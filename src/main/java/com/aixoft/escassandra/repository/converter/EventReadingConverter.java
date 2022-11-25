@@ -19,14 +19,13 @@ import java.io.IOException;
 @AllArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class EventReadingConverter implements Converter<String, Event> {
-    DomainEventsComponent domainEventsConfiguration;
+    DomainEventsComponent domainEventsComponent;
     ObjectMapper objectMapper;
 
     /**
      * Converts JSON String to Event.
      *
      * @param eventWrapperString JSON serialized {@link com.aixoft.escassandra.repository.converter.EventWrapper}.
-     *
      * @return Deserialized event.
      */
     @SneakyThrows(value = IOException.class)
@@ -37,6 +36,6 @@ public class EventReadingConverter implements Converter<String, Event> {
 
         JsonNode data = rootNode.at("/data");
 
-        return objectMapper.readValue(data.traverse(), domainEventsConfiguration.getEventClassByName(eventName));
+        return objectMapper.readValue(data.traverse(), domainEventsComponent.getEventClassByName(eventName));
     }
 }
