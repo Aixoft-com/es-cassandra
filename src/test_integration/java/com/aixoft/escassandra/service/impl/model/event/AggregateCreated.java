@@ -19,7 +19,7 @@ public class AggregateCreated implements Event<AggregateDataMock> {
     }
 
     @Override
-    public AggregateUpdater<AggregateDataMock> createUpdater() {
+    public AggregateUpdater<AggregateDataMock> updater() {
         return obj -> new AggregateDataMock(userName, 0);
     }
 }

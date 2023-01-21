@@ -29,6 +29,11 @@ More info: https://cassandra.apache.org/
 Following repository contains examples of usage:
 https://bitbucket.org/aixoft/escassandra-sample
 
+### Event Versioning
+Event version checking in command level is required when multiple commands are valid for the current state of aggregate.
+In such case Versioned version of commands can be used to prevent races on event write to cassandra.
+When only one command can be used for given flow in given aggregate state then Versioned Commands are not required.
+
 ## Configuration
 
 ### Aggregate schema
