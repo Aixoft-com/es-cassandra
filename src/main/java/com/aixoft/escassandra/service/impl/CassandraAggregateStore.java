@@ -30,7 +30,7 @@ public class CassandraAggregateStore implements AggregateStore {
      * <p>
      * Store is performed in following order:
      * <p>
-     *     1. Events are applied on aggregate through updater (See {@link com.aixoft.escassandra.model.Event#createUpdater()}).
+     *     1. Events are applied on aggregate through updater (See {@link com.aixoft.escassandra.model.Event#updater()}).
      * <p>
      *     2. If event applied successfully then events are persisted in cassandra database.
      * <p>

@@ -47,5 +47,10 @@ public class EventVersion {
         return new EventVersion(0, 0);
     }
 
+    @Override
+    public String toString() {
+        return String.format("%d.%d", major, minor);
+    }
+
 
 }

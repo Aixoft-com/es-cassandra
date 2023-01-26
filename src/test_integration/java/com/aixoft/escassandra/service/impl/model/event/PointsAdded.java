@@ -19,7 +19,7 @@ public class PointsAdded implements Event<AggregateDataMock> {
     }
 
     @Override
-    public AggregateUpdater<AggregateDataMock> createUpdater() {
+    public AggregateUpdater<AggregateDataMock> updater() {
         return obj -> new AggregateDataMock(obj.getUserName(), obj.getPoints() + points);
     }
 }

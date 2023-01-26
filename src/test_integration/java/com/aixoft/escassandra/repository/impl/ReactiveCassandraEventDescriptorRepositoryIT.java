@@ -162,7 +162,7 @@ class AggregateCreated implements Event<AggregateDataMock> {
     }
 
     @Override
-    public AggregateUpdater<AggregateDataMock> createUpdater() {
+    public AggregateUpdater<AggregateDataMock> updater() {
         return obj -> new AggregateDataMock(userName, 0);
     }
 }
@@ -178,7 +178,7 @@ class PointsAdded implements Event<AggregateDataMock> {
     }
 
     @Override
-    public AggregateUpdater<AggregateDataMock> createUpdater() {
+    public AggregateUpdater<AggregateDataMock> updater() {
         return obj -> obj.withPoints(points);
     }
 }
@@ -196,7 +196,7 @@ class SnapshotCreated implements SnapshotEvent<AggregateDataMock> {
     }
 
     @Override
-    public AggregateUpdater<AggregateDataMock> createUpdater() {
+    public AggregateUpdater<AggregateDataMock> updater() {
         return obj -> new AggregateDataMock(userName, points);
     }
 

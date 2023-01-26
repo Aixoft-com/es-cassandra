@@ -14,9 +14,9 @@ import java.util.*;
  * @param <T> Aggregate data type parameter.
  */
 public abstract class AggregateRoot<T> {
+    private final UUID id;
     private EventVersion committedVersion;
     private EventVersion currentVersion;
-    private final UUID id;
     private final LinkedList<EventDescriptor> changes = new LinkedList<>();
 
     /**
@@ -26,20 +26,6 @@ public abstract class AggregateRoot<T> {
      */
     protected AggregateRoot(@NonNull UUID id) {
         this.id = id;
-    }
-
-    /**
-     * Adds events to unpublished events' queue. It does not modify aggregate data connected with the event.
-     * <p>
-     * Updates aggregate's current version (See {@link EventVersion#getNextMinor()}).
-     *
-     * @param events the event list.
-     */
-    protected void publish(@NonNull List<Event<T>> events) {
-        for(Event<T> event: events) {
-            currentVersion = currentVersion.getNextMinor();
-            changes.add(new EventDescriptor(currentVersion, event));
-        }
     }
 
     /**
@@ -122,20 +108,13 @@ public abstract class AggregateRoot<T> {
         return Collections.unmodifiableList(changes);
     }
 
-    /**
-     * Gets original list of uncommitted events.
-     *
-     * @return All events which were published for the aggregate but not committed.
-     */
-    protected LinkedList<EventDescriptor> getOriginalUncommittedEvents() {
-        return changes;
-    }
-
     @Override
     public String toString() {
-        return "AggregateRoot{" +
-            "committedVersion=" + committedVersion +
-            ", id=" + id +
-            '}';
+        return this.getClass().getName()
+            +"(id=" + id
+            + ", committedVersion=" + committedVersion
+            + ", currentVersion=" + currentVersion
+            + ", changes=" + this.changes
+            + ")";
     }
 }

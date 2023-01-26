@@ -7,5 +7,5 @@ package com.aixoft.escassandra.model;
  */
 public interface Event<T> {
 
-    AggregateUpdater<T> createUpdater();
+    AggregateUpdater<T> updater();
 }
